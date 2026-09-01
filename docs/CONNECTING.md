@@ -21,9 +21,20 @@ is the one place an OAuth issuer may do so.
 npx @modelcontextprotocol/inspector
 ```
 
-Transport **Streamable HTTP**, URL `http://localhost:3000/mcp`, then Connect. Sign in
-when the browser opens, then call `check_api_access` — it reports which companies your
-account can reach, which confirms the whole chain works.
+First run downloads for ~40 s and may print a deprecation warning unrelated to this repo.
+
+The Inspector (v2.4.0) opens on a **Servers** dashboard with demo servers already listed —
+there is no URL field on that screen. Click **Add Servers → + Add manually**, then set
+transport **Streamable HTTP** and URL `http://localhost:3000/mcp`, and Connect.
+
+Sign in when the browser opens, then call `check_api_access` — it reports which companies
+your account can reach, which confirms the whole chain works.
+
+> The Inspector's own OAuth callback is on `localhost:6274`, not `localhost:3000`. That is
+> correct and nothing to fix: those are two different legs. `localhost:6274` is where
+> **this server** sends the Inspector back, and this server accepts any redirect URI the
+> client registered with it. `<PUBLIC_URL>/oauth/callback` is the separate leg where
+> **Unimicro** sends this server back, and that one must match the portal exactly.
 
 ## Claude Code
 
@@ -104,14 +115,5 @@ page.
 
 ## Troubleshooting
 
-| Symptom | Cause |
-|---|---|
-| `401` from `/mcp` | Expected without a token. Sign in through your client. |
-| Sign-in ends on a Unimicro error page | The client's callback URL is not exactly `<PUBLIC_URL>/oauth/callback`. |
-| `invalid_scope` during sign-in | `UNIMICRO_SCOPES` asks for a scope your client does not have. |
-| Sign-in works, tools fail | The client is missing the `AppFramework` scope. See the README. |
-| `Parse error: Invalid JSON` | The `_meta` envelope is missing, or `Content-Type` is not `application/json`. |
-| `Unknown client_id` on `/oauth/authorize` | The client registered before a restart. In-memory registrations do not survive one — reconnect. |
-| Tools error with a list of companies | Working as intended: pass one as `companyKey`. |
-| `403` on `/mcp` from a browser client | Its origin is not allowed. Add it to `ALLOWED_ORIGINS`. |
-| Server refuses to start, "must use https" | `PUBLIC_URL` is plain HTTP and not localhost. |
+See the table in the [README](../README.md#troubleshooting) — it is the only one, so it
+stays correct.

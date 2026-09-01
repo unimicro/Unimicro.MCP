@@ -10,18 +10,18 @@ import { TtlStore } from './store.js';
  *
  * MCP clients expect to register themselves and then run a plain PKCE
  * authorization code flow. Unimicro's identity provider allows neither: apps
- * are registered by hand at developer.unimicro.no, redirect URIs are fixed at
- * registration time, and its token endpoint has no `none` auth method.
+ * are registered by hand in the developer portal, and their callback URLs are
+ * fixed at registration time.
  *
  * So this server stands in the middle. Downstream it is a public-client
- * authorization server that any MCP client can talk to. Upstream it is a
- * single confidential client with one pre-registered redirect URI. The two
+ * authorization server that any MCP client can talk to. Upstream it is your
+ * one registered client — confidential or public — with one fixed callback. The two
  * halves are stitched together by a short-lived transaction record.
  *
- *     MCP client ──▶ /oauth/authorize ──▶ test-login.unimicro.no/connect/authorize
+ *     MCP client ──▶ /oauth/authorize ──▶ <UNIMICRO_ISSUER>/connect/authorize
  *                                                      │
  *     MCP client ◀── /oauth/callback  ◀─────────────────┘
- *     MCP client ──▶ /oauth/token     ──▶ test-login.unimicro.no/connect/token
+ *     MCP client ──▶ /oauth/token     ──▶ <UNIMICRO_ISSUER>/connect/token
  *
  * The access token handed back is Unimicro's own, unmodified — this server
  * mints no tokens of its own. See docs/AUTH.md for why, and what that costs.

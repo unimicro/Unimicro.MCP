@@ -47,15 +47,16 @@ Two portal client types suit this server:
 The broker sends `client_secret` upstream only when one is configured, so both work
 unchanged.
 
-## Two things that must be right
+## Token lifetime
 
-**The callback URL must match exactly**: `<PUBLIC_URL>/oauth/callback`. Anything else ends
-the sign-in on a Unimicro error page whose text does not tell you that is the cause.
+Tokens last one hour, and **no refresh token is issued under the default scopes**. The
+broker implements the `refresh_token` grant and advertises it, but Unimicro only returns a
+refresh token when `offline_access` is requested — and your client must carry that scope
+for the request to be legal. Add it to both, or expect a fresh browser sign-in each hour.
 
-**Every scope in `UNIMICRO_SCOPES` must be listed on your client.** Asking for one it does
-not have fails with `invalid_scope`. `AppFramework` is the scope that grants API access —
-if sign-in works but tools fail, that is the one missing. See the README for the order to
-set it in.
+Setup problems and what they look like live in the
+[README troubleshooting table](../README.md#troubleshooting), which is the only one in the
+repo.
 
 ## What a client discovers
 
@@ -115,8 +116,22 @@ the hot path.
 
 MCP 2026-07-28 says a resource server **MUST** reject tokens not issued for itself.
 Unimicro issues tokens audienced to its own API resource and does not implement RFC 8707
-resource indicators, so no token will ever carry this server's URL in `aud`. This server
-therefore accepts the upstream audience.
+resource indicators, so no token will ever carry this server's URL in `aud`. Decode a real
+one and you see:
+
+```json
+{
+  "iss": "https://dev-login.unimicro.no",
+  "aud": ["AppFramework", "https://dev-login.unimicro.no/resources"],
+  "client_id": "…", "sub": "…", "exp": 1788262034
+}
+```
+
+No `http://localhost:3000/mcp` anywhere, and no way to ask for one. This server therefore
+accepts the upstream audience.
+
+That `aud` is also the fastest way to tell which environment a token came from — useful
+when a sign-in fails for no visible reason.
 
 That is safe **here** for one reason: this server is a facade over the very API the token
 was minted for. It cannot let a token do anything its holder could not already do by

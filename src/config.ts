@@ -13,8 +13,13 @@ const schema = z.object({
      * The public origin this server is reachable on. It is the OAuth issuer
      * identifier and the base of every URL advertised in discovery documents,
      * so it must match what clients actually dial — including the port.
+     *
+     * Left unset it follows `PORT`, so changing the port alone cannot leave the
+     * server advertising an address it is not listening on. Set it explicitly
+     * only when the public address differs from the bind address — behind a
+     * proxy, or in a container.
      */
-    PUBLIC_URL: z.url().default('http://localhost:3000'),
+    PUBLIC_URL: z.url().optional(),
 
     /**
      * Unimicro's identity provider. The default matches the environment you get
@@ -27,10 +32,11 @@ const schema = z.object({
     UNIMICRO_API_BASE_URL: z.url().default('https://dev.unimicro.no'),
 
     /**
-     * The app you registered at developer.unimicro.no. Unimicro offers no
-     * dynamic registration, so this id is fixed at registration time.
+     * The client on the application you registered in the developer portal.
+     * Unimicro offers no dynamic registration, so this id is fixed at
+     * registration time.
      */
-    UNIMICRO_CLIENT_ID: z.string().min(1, 'UNIMICRO_CLIENT_ID is required — register an app at https://developer.unimicro.no/portal/applications'),
+    UNIMICRO_CLIENT_ID: z.string().min(1, 'UNIMICRO_CLIENT_ID is required — see the README. The portal that matches the default issuer is https://dev-developer.unimicro.no'),
 
     /**
      * The secret for that app, when it has one.
@@ -77,7 +83,9 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
         throw new Error(`Invalid configuration:\n${issues}\n\nCopy .env.example to .env and fill it in.`);
     }
     const e = parsed.data;
-    const publicUrl = new URL(e.PUBLIC_URL);
+    // Default the public origin from the port actually bound, so the two cannot
+    // drift apart. A wrong PUBLIC_URL is invisible until sign-in fails.
+    const publicUrl = new URL(e.PUBLIC_URL ?? `http://localhost:${e.PORT}`);
     const hostname = publicUrl.hostname;
     const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '[::1]';
 

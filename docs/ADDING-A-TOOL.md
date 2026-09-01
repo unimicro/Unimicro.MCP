@@ -151,7 +151,10 @@ If you build a flow where that is not true — several steps, or a value the cli
 not see — mint signed state instead:
 
 ```ts
-const codec = createRequestStateCodec<MyState>({ key: process.env.STATE_KEY! });  // ≥32 bytes
+// Add STATE_KEY to the schema in src/config.ts and read it from Config —
+// nothing outside that file touches process.env. The key must be ≥32 bytes;
+// generate one with: openssl rand -base64 48
+const codec = createRequestStateCodec<MyState>({ key: config.stateKey });
 
 return inputRequired({
     inputRequests: { … },

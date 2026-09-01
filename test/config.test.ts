@@ -24,6 +24,22 @@ describe('configuration', () => {
         expect(config.isLocalhost).toBe(true);
     });
 
+    it('follows PORT when PUBLIC_URL is not set', () => {
+        // Otherwise the server listens on one port and advertises another, and
+        // every OAuth document points somewhere nothing is running.
+        const { PUBLIC_URL, ...env } = TEST_ENV;
+        const config = loadConfig({ ...env, PORT: '3010' });
+        expect(config.port).toBe(3010);
+        expect(config.publicUrl.origin).toBe('http://localhost:3010');
+        expect(config.resourceUrl.href).toBe('http://localhost:3010/mcp');
+    });
+
+    it('lets an explicit PUBLIC_URL win over PORT', () => {
+        const config = loadConfig({ ...TEST_ENV, PORT: '3010', PUBLIC_URL: 'https://mcp.example.com' });
+        expect(config.port).toBe(3010);
+        expect(config.publicUrl.origin).toBe('https://mcp.example.com');
+    });
+
     it('refuses a plain-HTTP public URL outside localhost', () => {
         expect(() => loadConfig({ ...TEST_ENV, PUBLIC_URL: 'http://mcp.example.com' }))
             .toThrow(/must use https/);

@@ -93,8 +93,12 @@ describe('check_api_access', () => {
 
         expect(result.companyCount).toBe(2);
         expect(result.defaultCompanyKey).toBeNull();
-        expect(result.notes.join(' ')).toContain('several companies');
-        expect(result.notes.join(' ')).toContain('c-2');
+        expect(result.notes.join(' ')).toContain('companyKey');
+
+        // The companies are already in `companies`; repeating them in the note
+        // doubles the tokens this tool costs on every call.
+        expect(result.notes.join(' ')).not.toContain('c-1');
+        expect(result.notes.join(' ')).not.toContain('One AS');
     });
 
     it('honours a CompanyKey header from the host', async () => {
@@ -117,7 +121,7 @@ describe('check_api_access', () => {
 
         expect(result.companyCount).toBe(0);
         expect(result.defaultCompanyKey).toBeNull();
-        expect(result.notes.join(' ')).toContain('no Unimicro companies');
+        expect(result.notes.join(' ')).toContain('no companies');
     });
 
     it('surfaces an API failure as a tool error the model can act on', async () => {

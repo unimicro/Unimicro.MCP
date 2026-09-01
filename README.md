@@ -1,14 +1,37 @@
 # Unimicro MCP Server Template
 
 A working [MCP](https://modelcontextprotocol.io) server for the
-[Unimicro API](https://developer.unimicro.no), in TypeScript. **Use this template**, add
-your credentials, `npm run dev`.
+[Unimicro API](https://developer.unimicro.no), in TypeScript. Speaks MCP revision
+**2026-07-28** and ships one tool, so there is nothing to delete before you start writing
+your own.
 
-It speaks MCP revision **2026-07-28** — stateless Streamable HTTP, OAuth 2.1, multi
-round-trip requests — and ships one tool, so there is nothing to delete before you start
-writing your own.
+```bash
+git clone https://github.com/unimicro/Unimicro.MCP.git
+cd Unimicro.MCP
+```
 
 Building with an AI agent? Point it at [AGENTS.md](AGENTS.md).
+
+---
+
+## Which environment am I in?
+
+Unimicro runs several environments. Each is a **matched set** — portal, login and API —
+and mixing them across sets is the single easiest way to lose an hour, because everything
+looks fine until sign-in fails with an error that never mentions environments.
+
+| | Portal (register here) | Login | API |
+|---|---|---|---|
+| **dev** ← this template's default | `dev-developer.unimicro.no` | `dev-login.unimicro.no` | `dev.unimicro.no` |
+| **test** | `developer.unimicro.no` | `test-login.unimicro.no` | `test.unimicro.no` |
+
+Both portals render the same page title and both hostnames answer normally, so a wrong
+one gives you no signal at all. **Register in the portal on the same row as the login
+host you are pointing at.** This template defaults to dev; to use test instead, set
+`UNIMICRO_ISSUER` and `UNIMICRO_API_BASE_URL` together.
+
+Production hostnames differ again. Don't point a fork there without reading
+[docs/AUTH.md](docs/AUTH.md).
 
 ---
 
@@ -19,28 +42,26 @@ You need [Node.js 22+](https://nodejs.org). No database, no Docker, no certifica
 ### 1. Get a developer account
 
 Sign up at **[dev-developer.unimicro.no](https://dev-developer.unimicro.no/portal/onboarding)**
-— the GitHub button is the quickest way in. You get a developer licence, a test company,
-and a **Demo application** to build on.
+using the GitHub button. Provisioning is immediate — no email, no waiting for approval —
+and you end up with a developer licence, a test company, and a **Demo application** to
+build on.
 
 ### 2. Set up the application
 
-Open the Demo application → **Settings**, and do these in order:
+Open the Demo application → **Settings**, in this order:
 
 1. Pick a **Category**. It is required, and saving does nothing until it is set.
 2. Under **Access level**, expand **AppFramework** and tick `AppFramework`.
-3. **Save changes.** The status next to the name should now read **Active**.
+3. **Save changes.** The status by the name should now read **Active**.
 
 > **Order matters.** Set the access level *before* creating a client in the next step —
 > a client only gets the scopes the application had when it was created.
 
 ### 3. Create a client
 
-Still in **Settings** → **Authentication**, create either type:
-
-| Type | Secret |
-|---|---|
-| **Mobile/native app** | none — one less thing to manage |
-| **Regular web app** | yes |
+Still in **Settings** → **Authentication**. **Pick Mobile/native app** unless you know you
+want a secret to manage — it is a public client and authenticates with PKCE alone. A
+Regular web app also works and gives you a client secret.
 
 Set the callback URL to exactly:
 
@@ -48,20 +69,27 @@ Set the callback URL to exactly:
 http://localhost:3000/oauth/callback
 ```
 
-and the logout URL to `http://localhost:3000`. Copy the **client id** and, if you made a
-web app, the **client secret** — the secret is shown only once.
+and the logout URL to `http://localhost:3000`. Copy the **client id**, and the **client
+secret** if you made a web app — the secret is shown only once.
+
+> Using a different port? Set `PORT`, and register `http://localhost:<PORT>/oauth/callback`
+> instead. Everything else follows `PORT` automatically.
 
 ### 4. Run it
 
 ```bash
-npm install && cp .env.example .env
+npm install
+cp -n .env.example .env    # -n so a re-run can't clobber a secret you already pasted
 ```
 
-Paste the client id (and secret) into `.env`, then:
+Put the client id (and secret) in `.env`, then:
 
 ```bash
 npm run dev
 ```
+
+The first line of output mentions `dangerouslyAllowInsecureIssuerUrl`. That is expected on
+localhost and nothing is wrong — see [docs/AUTH.md](docs/AUTH.md).
 
 ### 5. Connect
 
@@ -69,9 +97,13 @@ npm run dev
 npx @modelcontextprotocol/inspector
 ```
 
-Transport **Streamable HTTP**, URL `http://localhost:3000/mcp`, Connect. Sign in when the
-browser opens, then call `check_api_access` — it lists the companies your account can
-reach, which confirms the whole chain works.
+First run downloads for ~40 s and may print a deprecation warning that has nothing to do
+with this repo. In the Inspector (v2.4.0), you land on a **Servers** dashboard with demo
+servers already listed — click **Add Servers → + Add manually**, then choose transport
+**Streamable HTTP** and URL `http://localhost:3000/mcp`, and Connect.
+
+Sign in when the browser opens, then call `check_api_access` — it lists the companies your
+account can reach, which confirms the whole chain works.
 
 Claude Desktop, Claude Code and raw `curl`: [docs/CONNECTING.md](docs/CONNECTING.md).
 
@@ -136,15 +168,15 @@ export function registerInvoiceTools(server: McpServer, ctx: ToolContext): void 
 }
 ```
 
-[docs/ADDING-A-TOOL.md](docs/ADDING-A-TOOL.md) has the rest: descriptions a model
-actually follows, and how a write tool asks the user before it acts.
+[docs/ADDING-A-TOOL.md](docs/ADDING-A-TOOL.md) has the rest: descriptions a model actually
+follows, and how a write tool asks the user before it acts.
 
 ---
 
 ## Testing
 
 ```bash
-npm test          # 37 tests
+npm test          # 39 tests
 npm run typecheck
 npm run build
 ```
@@ -156,12 +188,20 @@ API stubbed. `test/mcp.test.ts` is the clearest spec of the wire format.
 
 ## Troubleshooting
 
-| Symptom | Fix |
+This is the only troubleshooting table in the repo; the other docs link here.
+
+| Symptom | Cause |
 |---|---|
+| First line of startup says `dangerouslyAllowInsecureIssuerUrl` | Expected on localhost. Not a misconfiguration. |
+| `401` from `/mcp` | Expected without a token. Sign in through your client. |
 | Sign-in ends on a Unimicro error page | The client's callback URL must be **exactly** `<PUBLIC_URL>/oauth/callback`. |
 | `invalid_scope` during sign-in | `UNIMICRO_SCOPES` asks for something your client doesn't have. Match it to the client's scope list in the portal. |
+| Sign-in works, tools fail | The client is missing the `AppFramework` scope. Set the access level, then recreate the client — a client keeps the scopes it was born with. |
+| Sign-in fails and nothing above fits | Environment mismatch. Decode your token at [jwt.io](https://jwt.io) and read `aud` — it names the environment. Compare with the table at the top. |
 | Saving the application does nothing | **Category** is empty. It is required. |
-| Tools fail but sign-in worked | Your client is missing the `AppFramework` scope — set the access level, then recreate the client. |
+| Your client must sign in again every hour | Tokens last one hour and no refresh token is issued by default. See `UNIMICRO_SCOPES` in `.env.example`. |
+| `Unknown client_id` on `/oauth/authorize` | The MCP client registered before a restart. Registrations are in memory — reconnect it. |
+| `403` on `/mcp` from a browser client | Its origin isn't allowed. Add it to `ALLOWED_ORIGINS`. |
 | Server won't start, "must use https" | `PUBLIC_URL` is plain HTTP and not localhost. Correct — don't work around it. |
 | Tool returns a list of companies | Working as intended. Pass one as `companyKey`. |
 
@@ -169,16 +209,10 @@ API stubbed. `test/mcp.test.ts` is the clearest spec of the wire format.
 
 ## Going to production
 
-A few choices here suit a single instance against a test environment:
-
-| What | Change for production |
-|---|---|
-| Broker state in memory (`src/auth/store.ts`) | Move to Redis for more than one replica |
-| Registrations lost on restart | Persist them, or rely on CIMD only |
-| Upstream tokens passed straight through | Read [docs/AUTH.md](docs/AUTH.md) before fronting anything else |
-
-`PUBLIC_URL` must be HTTPS anywhere but localhost — the server refuses to start
-otherwise, because an OAuth issuer over plain HTTP is not one. A `Dockerfile` is included.
+`PUBLIC_URL` must be HTTPS anywhere but localhost — the server refuses to start otherwise.
+Broker state is in memory, so move `src/auth/store.ts` to Redis before running more than
+one replica. Read [docs/AUTH.md](docs/AUTH.md) first: it explains the one deliberate spec
+deviation and when it stops being safe. A `Dockerfile` is included.
 
 ---
 

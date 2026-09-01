@@ -40,12 +40,16 @@ export function registerCheckAccessTool(server: McpServer, ctx: ToolContext): vo
             const notes: string[] = [];
 
             // resolveCompanyKey throws when it genuinely cannot decide. Here that
-            // is a diagnostic to report, not a failure.
+            // is a diagnostic to report, not a failure — and the companies are
+            // already in this result, so the note stays short rather than
+            // repeating the whole list a second time.
             let defaultCompanyKey: string | null = null;
             try {
                 defaultCompanyKey = await ctx.resolveCompanyKey();
-            } catch (error) {
-                notes.push((error as Error).message);
+            } catch {
+                notes.push(companies.length === 0
+                    ? 'This user has access to no companies. Check that the account is active and licensed.'
+                    : 'No default company: pass one of the companyKey values above to other tools.');
             }
 
             if (ctx.headerCompanyKey) {
