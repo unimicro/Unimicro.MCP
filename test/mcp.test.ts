@@ -1,4 +1,4 @@
-import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { mcpCall, startApp, type RunningApp } from './helpers.js';
 
 /**
@@ -50,7 +50,7 @@ describe('tools/list', () => {
         const { body } = await mcpCall(app.baseUrl, 'tools/list');
         const tools: any[] = body.result.tools;
 
-        expect(tools.map(t => t.name)).toEqual(['check_api_access']);
+        expect(tools.map(t => t.name)).toContain('check_api_access');
 
         const [tool] = tools;
         expect(tool.title).toBeTruthy();

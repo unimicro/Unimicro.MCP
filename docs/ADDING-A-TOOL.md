@@ -40,7 +40,18 @@ server.registerTool(
 
 Return **both**. The text block is what a model reads when a client does not understand
 structured output; `structuredContent` is what everything else uses. Keep the text
-short — it is tokens on every single call.
+short — it is tokens on every single call, and never repeat in it what is already in
+`structuredContent`.
+
+`outputSchema` is worth the few lines it costs. The Unimicro API is not uniformly typed
+across companies — `InvoiceNumber`, for one, comes back as a number from some and a string
+from others — and a declared schema turns that into a loud, specific error instead of
+wrong data in a demo:
+
+```
+Output validation error: invoices.0.invoiceNumber:
+  Invalid input: expected number, received string
+```
 
 ## Writing a description the model follows
 
@@ -99,6 +110,12 @@ unless it has been told the choice is ambiguous.
 
 ## Calling the API
 
+**What to call is documented at
+[developer.unimicro.no/guide/endpoints](https://developer.unimicro.no/guide/endpoints/)** —
+customers, invoices, products, orders, journal entries, users and more, with request and
+response shapes. Read the page for your endpoint before writing the call; the API answers
+`401` for unknown paths as readily as for real ones, so you cannot discover it by probing.
+
 `ctx.api` carries the caller's token already:
 
 ```ts
@@ -110,8 +127,19 @@ await ctx.api.get<Row[]>('api/biz/invoices', {
 await ctx.api.post<Row>('api/biz/invoices', payload, { companyKey: company });
 ```
 
+`put`, `del` and the general `request(method, path, options)` are there too — Unimicro uses
+`PUT` for updates and `PUT ?action=…` for state changes.
+
 `query` values are URL-encoded for you. A non-2xx response throws `UnimicroApiError`
 carrying the status and body.
+
+**An OData `filter` is a string you build, so escape anything the model supplied.** URL
+encoding does not save you here — a customer called `O'Brien AS` closes the quote early:
+
+```ts
+const safe = name.replace(/'/g, "''");
+query: { filter: `contains(CustomerName,'${safe}')` }
+```
 
 ## Writes must ask first
 

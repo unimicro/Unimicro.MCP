@@ -14,7 +14,8 @@
     "build": "tsc",
     "typecheck": "tsc --noEmit && tsc -p tsconfig.test.json",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "token": "tsx --env-file-if-exists=.env scripts/token.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/express": "^2.0.0",

@@ -31,12 +31,9 @@ account. Ask for them rather than guessing.
 Two things about that request are worth getting right, because both are invisible until
 sign-in fails:
 
-- **Environments come in matched sets** (portal / login / API). The README has the table.
-  Credentials from one set will not work against another, and the failure never mentions
-  environments.
-- **Order matters** when the human sets up the application: the access level must be
-  granted *before* the client is created. Point them at the README rather than
-  improvising.
+Point them at the README rather than improvising: it has the environment table (portal,
+login and API come as matched sets) and the step order that matters (access level before
+client). Both failures are invisible until sign-in.
 
 ## Run
 
@@ -63,7 +60,9 @@ npm run build
 It is the fastest check that you have not broken the protocol layer.
 
 To exercise the OAuth discovery chain by hand, use the curls in
-[docs/CONNECTING.md](docs/CONNECTING.md).
+[docs/CONNECTING.md](docs/CONNECTING.md). For a bearer token, run `npm run token` — it
+prints a URL for the user to sign in with and then prints the token. Do not write your own
+OAuth client.
 
 Calling a tool needs a real access token, which needs a browser sign-in. **Do not try to
 automate the OAuth flow.** Ask the user to sign in through the MCP Inspector — the README
@@ -86,6 +85,11 @@ has the steps, including the two clicks the Inspector needs before it shows a UR
 1. Create `src/tools/<name>.ts` exporting `register<Name>Tools(server, ctx)`.
 2. Add one line to `registerTools()` in `src/tools/index.ts`.
 3. Add a test to `test/mcp.test.ts`.
+
+What to call is documented at
+[developer.unimicro.no/guide/endpoints](https://developer.unimicro.no/guide/endpoints/).
+The API answers `401` for unknown paths too, so you cannot find an endpoint by probing —
+read the page.
 
 Copy `src/tools/check-access.ts` — it is the reference shape. `docs/ADDING-A-TOOL.md` has
 the rules that matter: describe every parameter, constrain in the zod schema rather than in

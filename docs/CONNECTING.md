@@ -74,12 +74,28 @@ model picks one.
 
 ## Calling it with curl
 
-Useful when a client is misbehaving and you want to see the wire. The 2026-07-28 revision
-is strict: routing headers on the outside, a `_meta` envelope on the inside.
+Useful when a client is misbehaving and you want to see the wire.
+
+First get a token — you need a real one, and hand-rolling a PKCE client to obtain it is a
+detour nobody should repeat:
+
+```bash
+npm run token
+```
+
+It prints a sign-in URL, waits while you sign in, and prints a bearer token valid for about
+an hour. Then:
+
+```bash
+export TOKEN='paste-it-here'
+```
+
+The 2026-07-28 revision is strict: routing headers on the outside, a `_meta` envelope on
+the inside.
 
 ```bash
 curl -sN -X POST http://localhost:3000/mcp \
-  -H 'Authorization: Bearer <token>' \
+  -H "Authorization: Bearer $TOKEN" \
   -H 'Content-Type: application/json' \
   -H 'Accept: application/json, text/event-stream' \
   -H 'MCP-Protocol-Version: 2026-07-28' \
@@ -94,7 +110,7 @@ Calling a tool adds an `Mcp-Name` header naming it:
 
 ```bash
 curl -sN -X POST http://localhost:3000/mcp \
-  -H 'Authorization: Bearer <token>' \
+  -H "Authorization: Bearer $TOKEN" \
   -H 'Content-Type: application/json' \
   -H 'Accept: application/json, text/event-stream' \
   -H 'MCP-Protocol-Version: 2026-07-28' \
@@ -107,8 +123,10 @@ curl -sN -X POST http://localhost:3000/mcp \
                  "io.modelcontextprotocol/clientCapabilities":{}}}}'
 ```
 
-Responses may come back as a single JSON body or as one SSE frame; pipe through
-`sed -n 's/^data: //p'` when you see `data:` prefixes.
+Responses usually come back as a single JSON body. They arrive as an SSE frame instead
+when the handler emits anything before its result — pipe through
+`sed -n 's/^data: //p;/^{/p'` to handle both, since a plain `s/^data: //p` prints nothing
+at all for the ordinary JSON case and looks like a failed call.
 
 `test/mcp.test.ts` builds exactly these requests, so it is the executable version of this
 page.

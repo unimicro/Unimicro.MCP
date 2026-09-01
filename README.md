@@ -1,7 +1,7 @@
 # Unimicro MCP Server Template
 
 A working [MCP](https://modelcontextprotocol.io) server for the
-[Unimicro API](https://developer.unimicro.no), in TypeScript. Speaks MCP revision
+[Unimicro API](https://developer.unimicro.no/guide/endpoints/), in TypeScript. Speaks MCP revision
 **2026-07-28** and ships one tool, so there is nothing to delete before you start writing
 your own.
 
@@ -72,8 +72,12 @@ http://localhost:3000/oauth/callback
 and the logout URL to `http://localhost:3000`. Copy the **client id**, and the **client
 secret** if you made a web app — the secret is shown only once.
 
-> Using a different port? Set `PORT`, and register `http://localhost:<PORT>/oauth/callback`
-> instead. Everything else follows `PORT` automatically.
+> **Prefer port 3000.** Everything else follows `PORT` automatically, but the callback URL
+> is registered on the client and Unimicro will only redirect to a registered one — so a
+> different port also means editing the client in the portal. If you were handed a client
+> rather than making your own, you cannot change it, and sign-in will fail on an opaque
+> error page. If 3000 is busy, free it: the server now refuses to start and names the
+> process holding it.
 
 ### 4. Run it
 
@@ -104,6 +108,9 @@ servers already listed — click **Add Servers → + Add manually**, then choose
 
 Sign in when the browser opens, then call `check_api_access` — it lists the companies your
 account can reach, which confirms the whole chain works.
+
+Need a bearer token for `curl` or a script? `npm run token` prints a sign-in URL and hands
+you one.
 
 Claude Desktop, Claude Code and raw `curl`: [docs/CONNECTING.md](docs/CONNECTING.md).
 
@@ -168,6 +175,11 @@ export function registerInvoiceTools(server: McpServer, ctx: ToolContext): void 
 }
 ```
 
+**What you can call is documented at
+[developer.unimicro.no/guide/endpoints](https://developer.unimicro.no/guide/endpoints/)** —
+customers, invoices, products, orders, journal entries and more. The API returns `401` for
+unknown paths as well as real ones, so read the page rather than probing.
+
 [docs/ADDING-A-TOOL.md](docs/ADDING-A-TOOL.md) has the rest: descriptions a model actually
 follows, and how a write tool asks the user before it acts.
 
@@ -177,6 +189,7 @@ follows, and how a write tool asks the user before it acts.
 
 ```bash
 npm test          # 39 tests
+npm run token     # a bearer token, for curl and scripts
 npm run typecheck
 npm run build
 ```
@@ -202,6 +215,7 @@ This is the only troubleshooting table in the repo; the other docs link here.
 | Your client must sign in again every hour | Tokens last one hour and no refresh token is issued by default. See `UNIMICRO_SCOPES` in `.env.example`. |
 | `Unknown client_id` on `/oauth/authorize` | The MCP client registered before a restart. Registrations are in memory — reconnect it. |
 | `403` on `/mcp` from a browser client | Its origin isn't allowed. Add it to `ALLOWED_ORIGINS`. |
+| Server won't start, port in use | Something else holds it. The error names the PID; stop it, or free the port — see the note in step 3 before changing `PORT`. |
 | Server won't start, "must use https" | `PUBLIC_URL` is plain HTTP and not localhost. Correct — don't work around it. |
 | Tool returns a list of companies | Working as intended. Pass one as `companyKey`. |
 

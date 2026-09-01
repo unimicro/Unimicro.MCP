@@ -22,9 +22,8 @@ const schema = z.object({
     PUBLIC_URL: z.url().optional(),
 
     /**
-     * Unimicro's identity provider. The default matches the environment you get
-     * from the self-service sign-up in the README. Never point a fork at
-     * production without reading docs/AUTH.md.
+     * Unimicro's identity provider. Paired with the API URL below and with the
+     * portal you registered in — see the environment table in the README.
      */
     UNIMICRO_ISSUER: z.url().default('https://dev-login.unimicro.no'),
 

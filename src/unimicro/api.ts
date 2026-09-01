@@ -33,7 +33,10 @@ export class UnimicroApi {
 
     constructor(token: string, baseUrl: URL) {
         this.#token = token;
-        this.#baseUrl = baseUrl;
+        // A base URL with a path only survives relative resolution if it ends in
+        // a slash: without this, a base of `https://host/v1` silently drops the
+        // `/v1` from every request.
+        this.#baseUrl = baseUrl.href.endsWith('/') ? baseUrl : new URL(`${baseUrl.href}/`);
     }
 
     /** The companies this token's user may act on behalf of. */
@@ -52,6 +55,15 @@ export class UnimicroApi {
 
     post<T>(path: string, body: unknown, options: RequestOptions = {}): Promise<T> {
         return this.request<T>('POST', path, { ...options, body });
+    }
+
+    put<T>(path: string, body: unknown, options: RequestOptions = {}): Promise<T> {
+        return this.request<T>('PUT', path, { ...options, body });
+    }
+
+    /** `delete` is a reserved word, hence the name. */
+    del<T>(path: string, options: RequestOptions = {}): Promise<T> {
+        return this.request<T>('DELETE', path, options);
     }
 
     async request<T>(method: string, path: string, options: RequestOptions = {}): Promise<T> {
@@ -87,7 +99,7 @@ export class UnimicroApi {
 
 export interface RequestOptions {
     companyKey?: string | undefined;
-    query?: Record<string, string | number | undefined>;
+    query?: Record<string, string | number | boolean | undefined>;
     body?: unknown;
     signal?: AbortSignal | undefined;
 }
