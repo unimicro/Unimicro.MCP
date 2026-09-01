@@ -1,0 +1,18 @@
+import type { McpServer } from '@modelcontextprotocol/server';
+import type { ToolContext } from './context.js';
+import { registerCompanyTools } from './companies.js';
+import { registerCustomerTools } from './customers.js';
+
+/**
+ * Every tool this server exposes.
+ *
+ * To add one: write a `registerXTools(server, ctx)` function in a new file
+ * beside these, then add one line here. That single line is the whole
+ * registry — see docs/ADDING-A-TOOL.md.
+ */
+export function registerTools(server: McpServer, ctx: ToolContext): void {
+    registerCompanyTools(server, ctx);
+    registerCustomerTools(server, ctx);
+}
+
+export { createToolContext, type ToolContext } from './context.js';

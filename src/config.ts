@@ -1,0 +1,86 @@
+import { z } from 'zod';
+
+/**
+ * Every knob this server has, read from the environment once at startup.
+ *
+ * There is nothing to rename when you fork this repo — copy `.env.example`
+ * to `.env`, fill in the two Unimicro credentials, and run.
+ */
+const schema = z.object({
+    PORT: z.coerce.number().int().positive().default(5008),
+
+    /**
+     * The public origin this server is reachable on. It is the OAuth issuer
+     * identifier and the base of every URL advertised in discovery documents,
+     * so it must match what clients actually dial — including the port.
+     */
+    PUBLIC_URL: z.url().default('http://localhost:5008'),
+
+    /** Unimicro's identity provider. Test by default; never point a fork at production without reading docs/AUTH.md. */
+    UNIMICRO_ISSUER: z.url().default('https://test-login.unimicro.no'),
+
+    /** The AppFramework base URL that serves `/api/biz/...`. See `GET <base>/api/endpoints`. */
+    UNIMICRO_API_BASE_URL: z.url().default('https://test.unimicro.no'),
+
+    /**
+     * Credentials for the app you registered at developer.unimicro.no.
+     * Unimicro does not offer dynamic registration and its token endpoint has
+     * no `none` auth method, so this server is a confidential OAuth client.
+     */
+    UNIMICRO_CLIENT_ID: z.string().min(1, 'UNIMICRO_CLIENT_ID is required — register an app at https://developer.unimicro.no/portal/applications'),
+    UNIMICRO_CLIENT_SECRET: z.string().min(1, 'UNIMICRO_CLIENT_SECRET is required'),
+
+    /** Scopes requested upstream. Trim this to the least privilege your tools need. */
+    UNIMICRO_SCOPES: z.string().default('openid profile offline_access AppFramework'),
+
+    /** Extra browser origins allowed to call /mcp. localhost is always allowed. */
+    ALLOWED_ORIGINS: z.string().default(''),
+
+    LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
+});
+
+export type Config = Readonly<{
+    port: number;
+    publicUrl: URL;
+    /** Canonical RFC 8707 resource identifier for this MCP server. */
+    resourceUrl: URL;
+    issuer: URL;
+    apiBaseUrl: URL;
+    clientId: string;
+    clientSecret: string;
+    scopes: string[];
+    allowedOrigins: string[];
+    logLevel: 'debug' | 'info' | 'warn' | 'error';
+    /** True when we are on plain-HTTP localhost, which relaxes a few HTTPS-only checks. */
+    isLocalhost: boolean;
+}>;
+
+export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
+    const parsed = schema.safeParse(env);
+    if (!parsed.success) {
+        const issues = parsed.error.issues.map(i => `  ${i.path.join('.') || '(root)'}: ${i.message}`).join('\n');
+        throw new Error(`Invalid configuration:\n${issues}\n\nCopy .env.example to .env and fill it in.`);
+    }
+    const e = parsed.data;
+    const publicUrl = new URL(e.PUBLIC_URL);
+    const hostname = publicUrl.hostname;
+    const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '[::1]';
+
+    if (!isLocalhost && publicUrl.protocol !== 'https:') {
+        throw new Error(`PUBLIC_URL must use https outside localhost (got ${publicUrl.origin}). OAuth issuers are HTTPS-only.`);
+    }
+
+    return Object.freeze({
+        port: e.PORT,
+        publicUrl,
+        resourceUrl: new URL('/mcp', publicUrl),
+        issuer: new URL(e.UNIMICRO_ISSUER),
+        apiBaseUrl: new URL(e.UNIMICRO_API_BASE_URL),
+        clientId: e.UNIMICRO_CLIENT_ID,
+        clientSecret: e.UNIMICRO_CLIENT_SECRET,
+        scopes: e.UNIMICRO_SCOPES.split(/\s+/).filter(Boolean),
+        allowedOrigins: e.ALLOWED_ORIGINS.split(',').map(s => s.trim()).filter(Boolean),
+        logLevel: e.LOG_LEVEL,
+        isLocalhost,
+    });
+}
