@@ -1,63 +1,77 @@
 # Unimicro MCP Server Template
 
-A minimal, working [MCP](https://modelcontextprotocol.io) server for the
-[Unimicro API](https://developer.unimicro.no), in TypeScript. Use it as the starting
-point for your own: **Use this template**, add two credentials, `npm run dev`.
+A working [MCP](https://modelcontextprotocol.io) server for the
+[Unimicro API](https://developer.unimicro.no), in TypeScript. **Use this template**, add
+your credentials, `npm run dev`.
 
-It speaks MCP revision **2026-07-28** — stateless Streamable HTTP, multi round-trip
-requests, OAuth 2.1 — and ships exactly one tool, so there is nothing to delete before
-you start writing your own.
+It speaks MCP revision **2026-07-28** — stateless Streamable HTTP, OAuth 2.1, multi
+round-trip requests — and ships one tool, so there is nothing to delete before you start
+writing your own.
 
-> Points at Unimicro's **test** environment (`test-login.unimicro.no` /
-> `test.unimicro.no`) by default.
-
-Building this with an AI agent? Point it at [AGENTS.md](AGENTS.md).
+Building with an AI agent? Point it at [AGENTS.md](AGENTS.md).
 
 ---
 
-## Quickstart
+## Setup
 
-You need [Node.js 22+](https://nodejs.org) and a Unimicro test account. No database, no
-Docker, no local certificates.
+You need [Node.js 22+](https://nodejs.org). No database, no Docker, no certificates.
 
-**1. Register an app** at [developer.unimicro.no](https://developer.unimicro.no/portal/applications),
-add a client to it, and set the client's callback URL to exactly:
+### 1. Get a developer account
+
+Sign up at **[dev-developer.unimicro.no](https://dev-developer.unimicro.no/portal/onboarding)**
+— the GitHub button is the quickest way in. You get a developer licence, a test company,
+and a **Demo application** to build on.
+
+### 2. Set up the application
+
+Open the Demo application → **Settings**, and do these in order:
+
+1. Pick a **Category**. It is required, and saving does nothing until it is set.
+2. Under **Access level**, expand **AppFramework** and tick `AppFramework`.
+3. **Save changes.** The status next to the name should now read **Active**.
+
+> **Order matters.** Set the access level *before* creating a client in the next step —
+> a client only gets the scopes the application had when it was created.
+
+### 3. Create a client
+
+Still in **Settings** → **Authentication**, create either type:
+
+| Type | Secret |
+|---|---|
+| **Mobile/native app** | none — one less thing to manage |
+| **Regular web app** | yes |
+
+Set the callback URL to exactly:
 
 ```
 http://localhost:3000/oauth/callback
 ```
 
-Either client type works — a **Mobile/native app** (public, no secret) or a
-**Regular web app** (confidential, has a secret). The public one is less to manage.
+and the logout URL to `http://localhost:3000`. Copy the **client id** and, if you made a
+web app, the **client secret** — the secret is shown only once.
 
-Registering the app is not the last step. It must be **released, reviewed by Unimicro, and
-activated for the company you sign in with** before anyone can log in — until then the
-sign-in stops with *"Du har ikke tilgang til …"*. Budget for the review.
-[docs/AUTH.md](docs/AUTH.md#registering-the-app-the-whole-journey) walks the whole sequence.
-
-**2. Install and configure:**
+### 4. Run it
 
 ```bash
 npm install && cp .env.example .env
 ```
 
-Put the client id and secret from step 1 into `.env`.
-
-**3. Run it:**
+Paste the client id (and secret) into `.env`, then:
 
 ```bash
 npm run dev
 ```
 
-**4. Connect a client.** The MCP Inspector is the fastest way to see it work:
+### 5. Connect
 
 ```bash
 npx @modelcontextprotocol/inspector
 ```
 
-Transport **Streamable HTTP**, URL `http://localhost:3000/mcp`, Connect. Sign in when
-the browser opens, then call `check_api_access` — it reports which Unimicro companies
-your account can reach, which confirms the whole chain works.
+Transport **Streamable HTTP**, URL `http://localhost:3000/mcp`, Connect. Sign in when the
+browser opens, then call `check_api_access` — it lists the companies your account can
+reach, which confirms the whole chain works.
 
 Claude Desktop, Claude Code and raw `curl`: [docs/CONNECTING.md](docs/CONNECTING.md).
 
@@ -68,30 +82,22 @@ Claude Desktop, Claude Code and raw `curl`: [docs/CONNECTING.md](docs/CONNECTING
 ```
 src/
 ├── index.ts             start the server
-├── app.ts               wire up routes, auth, and the MCP handler
+├── app.ts               routes, auth, and the MCP handler
 ├── config.ts            every setting, read from the environment
-├── auth/                the OAuth broker — read docs/AUTH.md before changing it
-│   ├── broker.ts          /oauth/authorize, /callback, /token, /register
-│   ├── clients.ts         how a calling MCP client proves its redirect URIs are its own
-│   ├── verifier.ts        validating the bearer token on every request
-│   └── store.ts           short-lived state, in memory
-├── unimicro/api.ts      a thin typed wrapper over the Unimicro REST API
+├── auth/                the OAuth broker — see docs/AUTH.md
+├── unimicro/api.ts      a thin typed wrapper over the Unimicro API
 └── tools/               ← your code goes here
     ├── index.ts           the one-line registry
     ├── context.ts         what every tool is handed
-    └── check-access.ts    the only tool: verify API access. Copy it.
+    └── check-access.ts    the only tool. Copy it.
 ```
-
-`check_api_access` calls `GET /api/init/companies` and reports the API it reached, the
-companies the user can act on, and which one other tools will default to. It exists to
-prove the setup works and to be the shape you copy.
 
 ---
 
 ## Add your own tool
 
 Write a file in `src/tools/`, add one line to `src/tools/index.ts`. That is the whole
-registry — there is no reflection and nothing else to keep in sync.
+registry.
 
 ```ts
 import { z } from 'zod';
@@ -130,8 +136,8 @@ export function registerInvoiceTools(server: McpServer, ctx: ToolContext): void 
 }
 ```
 
-[docs/ADDING-A-TOOL.md](docs/ADDING-A-TOOL.md) covers the rest: writing a description a
-model actually follows, and making a write tool ask the user before it acts.
+[docs/ADDING-A-TOOL.md](docs/ADDING-A-TOOL.md) has the rest: descriptions a model
+actually follows, and how a write tool asks the user before it acts.
 
 ---
 
@@ -143,27 +149,36 @@ npm run typecheck
 npm run build
 ```
 
-The tests cover the OAuth broker's refusals, the discovery documents, and the tool over
-real HTTP with the identity provider and Unimicro API stubbed. `test/mcp.test.ts` is the
-clearest specification of the wire format — read it when a client misbehaves.
+The tests run the whole server over real HTTP with the identity provider and the Unimicro
+API stubbed. `test/mcp.test.ts` is the clearest spec of the wire format.
+
+---
+
+## Troubleshooting
+
+| Symptom | Fix |
+|---|---|
+| Sign-in ends on a Unimicro error page | The client's callback URL must be **exactly** `<PUBLIC_URL>/oauth/callback`. |
+| `invalid_scope` during sign-in | `UNIMICRO_SCOPES` asks for something your client doesn't have. Match it to the client's scope list in the portal. |
+| Saving the application does nothing | **Category** is empty. It is required. |
+| Tools fail but sign-in worked | Your client is missing the `AppFramework` scope — set the access level, then recreate the client. |
+| Server won't start, "must use https" | `PUBLIC_URL` is plain HTTP and not localhost. Correct — don't work around it. |
+| Tool returns a list of companies | Working as intended. Pass one as `companyKey`. |
 
 ---
 
 ## Going to production
 
-A few choices here are only right for a single instance against a test environment:
+A few choices here suit a single instance against a test environment:
 
-| What | Why it's fine here | What to change |
-|---|---|---|
-| Broker state in memory (`src/auth/store.ts`) | One process, short-lived state | Move to Redis for more than one replica |
-| Registrations lost on restart | Clients re-register automatically | Persist them, or rely on CIMD only |
-| Upstream tokens passed straight through | This server fronts the very API the token is for | Read [docs/AUTH.md](docs/AUTH.md) before fronting anything else |
-| Test environment by default | Nothing real can break | Change `UNIMICRO_ISSUER` and `UNIMICRO_API_BASE_URL`, and re-register your app |
+| What | Change for production |
+|---|---|
+| Broker state in memory (`src/auth/store.ts`) | Move to Redis for more than one replica |
+| Registrations lost on restart | Persist them, or rely on CIMD only |
+| Upstream tokens passed straight through | Read [docs/AUTH.md](docs/AUTH.md) before fronting anything else |
 
 `PUBLIC_URL` must be HTTPS anywhere but localhost — the server refuses to start
-otherwise, because an OAuth issuer over plain HTTP is not one.
-
-A `Dockerfile` is included and needs nothing beyond the environment.
+otherwise, because an OAuth issuer over plain HTTP is not one. A `Dockerfile` is included.
 
 ---
 

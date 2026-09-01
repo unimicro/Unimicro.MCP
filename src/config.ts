@@ -16,11 +16,15 @@ const schema = z.object({
      */
     PUBLIC_URL: z.url().default('http://localhost:3000'),
 
-    /** Unimicro's identity provider. Test by default; never point a fork at production without reading docs/AUTH.md. */
-    UNIMICRO_ISSUER: z.url().default('https://test-login.unimicro.no'),
+    /**
+     * Unimicro's identity provider. The default matches the environment you get
+     * from the self-service sign-up in the README. Never point a fork at
+     * production without reading docs/AUTH.md.
+     */
+    UNIMICRO_ISSUER: z.url().default('https://dev-login.unimicro.no'),
 
-    /** The AppFramework base URL that serves `/api/biz/...`. See `GET <base>/api/endpoints`. */
-    UNIMICRO_API_BASE_URL: z.url().default('https://test.unimicro.no'),
+    /** The API base URL that serves `/api/...`, paired with the issuer above. */
+    UNIMICRO_API_BASE_URL: z.url().default('https://dev.unimicro.no'),
 
     /**
      * The app you registered at developer.unimicro.no. Unimicro offers no
@@ -37,8 +41,12 @@ const schema = z.object({
      */
     UNIMICRO_CLIENT_SECRET: z.string().optional(),
 
-    /** Scopes requested upstream. Trim this to the least privilege your tools need. */
-    UNIMICRO_SCOPES: z.string().default('openid profile offline_access AppFramework'),
+    /**
+     * Scopes requested upstream. These must all be listed on your client in the
+     * portal — asking for one it does not have fails the sign-in with
+     * `invalid_scope`. `AppFramework` is the one that grants API access.
+     */
+    UNIMICRO_SCOPES: z.string().default('openid profile AppFramework'),
 
     /** Extra browser origins allowed to call /mcp. localhost is always allowed. */
     ALLOWED_ORIGINS: z.string().default(''),

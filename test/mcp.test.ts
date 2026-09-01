@@ -74,7 +74,7 @@ describe('check_api_access', () => {
 
         expect(body.result.structuredContent).toEqual({
             ok: true,
-            apiBaseUrl: 'https://test.unimicro.no',
+            apiBaseUrl: 'https://dev.unimicro.no',
             companyCount: 1,
             companies: [{ companyKey: 'c-1', name: 'Test AS', organizationNumber: '123456789' }],
             defaultCompanyKey: 'c-1',

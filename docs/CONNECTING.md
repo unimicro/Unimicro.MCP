@@ -107,7 +107,9 @@ page.
 | Symptom | Cause |
 |---|---|
 | `401` from `/mcp` | Expected without a token. Sign in through your client. |
-| Sign-in ends on a Unimicro error page | The redirect URI registered upstream is not exactly `<PUBLIC_URL>/oauth/callback`. |
+| Sign-in ends on a Unimicro error page | The client's callback URL is not exactly `<PUBLIC_URL>/oauth/callback`. |
+| `invalid_scope` during sign-in | `UNIMICRO_SCOPES` asks for a scope your client does not have. |
+| Sign-in works, tools fail | The client is missing the `AppFramework` scope. See the README. |
 | `Parse error: Invalid JSON` | The `_meta` envelope is missing, or `Content-Type` is not `application/json`. |
 | `Unknown client_id` on `/oauth/authorize` | The client registered before a restart. In-memory registrations do not survive one — reconnect. |
 | Tools error with a list of companies | Working as intended: pass one as `companyKey`. |

@@ -16,10 +16,10 @@ describe('configuration', () => {
         expect(loadConfig(TEST_ENV).clientSecret).toBe('test-client-secret');
     });
 
-    it('defaults to the Unimicro test environment', () => {
+    it('defaults to the environment the sign-up in the README provisions', () => {
         const config = loadConfig(TEST_ENV);
-        expect(config.issuer.origin).toBe('https://test-login.unimicro.no');
-        expect(config.apiBaseUrl.origin).toBe('https://test.unimicro.no');
+        expect(config.issuer.origin).toBe('https://dev-login.unimicro.no');
+        expect(config.apiBaseUrl.origin).toBe('https://dev.unimicro.no');
         expect(config.resourceUrl.href).toBe('http://localhost:3000/mcp');
         expect(config.isLocalhost).toBe(true);
     });
