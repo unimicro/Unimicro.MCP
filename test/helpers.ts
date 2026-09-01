@@ -5,7 +5,7 @@ import { createApp } from '../src/app.js';
 import { loadConfig, type Config } from '../src/config.js';
 
 export const TEST_ENV = {
-    PUBLIC_URL: 'http://localhost:5008',
+    PUBLIC_URL: 'http://localhost:3000',
     UNIMICRO_CLIENT_ID: 'test-client-id',
     UNIMICRO_CLIENT_SECRET: 'test-client-secret',
 } satisfies NodeJS.ProcessEnv;
@@ -53,7 +53,7 @@ export async function mcpCall(
     baseUrl: string,
     method: string,
     params: Record<string, unknown> = {},
-    { token = 'valid-token', name }: { token?: string; name?: string } = {},
+    { token = 'valid-token', name, headers: extraHeaders }: { token?: string; name?: string; headers?: Record<string, string> } = {},
 ): Promise<{ status: number; body: any }> {
     const headers: Record<string, string> = {
         'content-type': 'application/json',
@@ -63,6 +63,7 @@ export async function mcpCall(
     };
     if (name) headers['Mcp-Name'] = name;
     if (token) headers['authorization'] = `Bearer ${token}`;
+    Object.assign(headers, extraHeaders);
 
     const response = await fetch(`${baseUrl}/mcp`, {
         method: 'POST',

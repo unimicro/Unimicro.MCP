@@ -13,7 +13,7 @@ import { createTokenVerifier } from './auth/verifier.js';
 import { UnimicroApi } from './unimicro/api.js';
 import { createToolContext, registerTools } from './tools/index.js';
 
-export const SERVER_NAME = 'unimicro';
+export const SERVER_NAME = 'unimicro-mcp';
 export const SERVER_VERSION = '1.0.0';
 
 /**
@@ -77,7 +77,7 @@ export function createApp(config: Config, overrides: AppOverrides = {}): Express
         if (token) {
             const api = new UnimicroApi(token, config.apiBaseUrl);
             const companyKey = ctx.requestInfo?.headers.get('companykey') ?? undefined;
-            registerTools(server, createToolContext(api, companyKey));
+            registerTools(server, createToolContext(api, config.apiBaseUrl, companyKey));
         }
 
         return server;

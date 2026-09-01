@@ -73,7 +73,7 @@ describe('authorization request', () => {
             code_challenge: challenge,
             code_challenge_method: 'S256',
             state: 'client-state',
-            resource: 'http://localhost:5008/mcp',
+            resource: 'http://localhost:3000/mcp',
         }));
 
         expect(response.status).toBe(302);

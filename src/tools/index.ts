@@ -1,7 +1,6 @@
 import type { McpServer } from '@modelcontextprotocol/server';
 import type { ToolContext } from './context.js';
-import { registerCompanyTools } from './companies.js';
-import { registerCustomerTools } from './customers.js';
+import { registerCheckAccessTool } from './check-access.js';
 
 /**
  * Every tool this server exposes.
@@ -11,8 +10,7 @@ import { registerCustomerTools } from './customers.js';
  * registry — see docs/ADDING-A-TOOL.md.
  */
 export function registerTools(server: McpServer, ctx: ToolContext): void {
-    registerCompanyTools(server, ctx);
-    registerCustomerTools(server, ctx);
+    registerCheckAccessTool(server, ctx);
 }
 
 export { createToolContext, type ToolContext } from './context.js';

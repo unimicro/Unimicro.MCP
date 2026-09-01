@@ -100,17 +100,6 @@ interface RawCompany {
     OrganizationNumber?: string;
 }
 
-/** Build an OData `$filter`-style expression, escaping single quotes. */
-export const odata = {
-    eq: (field: string, value: string | number): string =>
-        typeof value === 'number' ? `${field} eq ${value}` : `${field} eq '${escapeOData(value)}'`,
-    contains: (field: string, value: string): string => `contains(${field},'${escapeOData(value)}')`,
-};
-
-function escapeOData(value: string): string {
-    return value.replace(/'/g, "''");
-}
-
 function truncate(text: string, max: number): string {
     return text.length <= max ? text : `${text.slice(0, max)}…`;
 }

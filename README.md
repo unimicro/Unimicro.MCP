@@ -1,14 +1,17 @@
 # Unimicro MCP Server Template
 
-A working [MCP](https://modelcontextprotocol.io) server for the
-[Unimicro API](https://developer.unimicro.no), written in TypeScript. Use it as the
-starting point for your own: **Use this template**, add two credentials, `npm run dev`.
+A minimal, working [MCP](https://modelcontextprotocol.io) server for the
+[Unimicro API](https://developer.unimicro.no), in TypeScript. Use it as the starting
+point for your own: **Use this template**, add two credentials, `npm run dev`.
 
 It speaks MCP revision **2026-07-28** — stateless Streamable HTTP, multi round-trip
-requests, OAuth 2.1 — and it ships three example tools you can read in one sitting.
+requests, OAuth 2.1 — and ships exactly one tool, so there is nothing to delete before
+you start writing your own.
 
-> Everything here points at Unimicro's **test** environment
-> (`test-login.unimicro.no` / `test.unimicro.no`) by default.
+> Points at Unimicro's **test** environment (`test-login.unimicro.no` /
+> `test.unimicro.no`) by default.
+
+Building this with an AI agent? Point it at [AGENTS.md](AGENTS.md).
 
 ---
 
@@ -21,7 +24,7 @@ Docker, no local certificates.
 with this redirect URI:
 
 ```
-http://localhost:5008/oauth/callback
+http://localhost:3000/oauth/callback
 ```
 
 **2. Install and configure:**
@@ -38,16 +41,17 @@ Put the client id and secret from step 1 into `.env`.
 npm run dev
 ```
 
-**4. Connect a client** — the MCP Inspector is the fastest way to see the tools:
+**4. Connect a client.** The MCP Inspector is the fastest way to see it work:
 
 ```bash
 npx @modelcontextprotocol/inspector
 ```
 
-Choose transport **Streamable HTTP**, URL `http://localhost:5008/mcp`, and connect. You
-will be sent to Unimicro to sign in, and land back on a list of three tools.
+Transport **Streamable HTTP**, URL `http://localhost:3000/mcp`, Connect. Sign in when
+the browser opens, then call `check_api_access` — it reports which Unimicro companies
+your account can reach, which confirms the whole chain works.
 
-For Claude Desktop, Claude Code, and raw `curl`, see [docs/CONNECTING.md](docs/CONNECTING.md).
+Claude Desktop, Claude Code and raw `curl`: [docs/CONNECTING.md](docs/CONNECTING.md).
 
 ---
 
@@ -55,35 +59,31 @@ For Claude Desktop, Claude Code, and raw `curl`, see [docs/CONNECTING.md](docs/C
 
 ```
 src/
-├── index.ts          start the server
-├── app.ts            wire up routes, auth, and the MCP handler
-├── config.ts         every setting, read from the environment
-├── auth/             the OAuth broker — read docs/AUTH.md before changing it
-│   ├── broker.ts       /oauth/authorize, /callback, /token, /register
-│   ├── clients.ts      how a calling MCP client proves which redirect URIs are its own
-│   ├── verifier.ts     validating the bearer token on every request
-│   └── store.ts        short-lived state, in memory
-├── unimicro/api.ts   a thin typed wrapper over the Unimicro REST API
-└── tools/            ← your code goes here
-    ├── index.ts        the one-line registry
-    ├── context.ts      what every tool is handed
-    ├── companies.ts    list_companies — the simplest possible tool
-    └── customers.ts    find_customers (read) and create_customer (write + confirm)
+├── index.ts             start the server
+├── app.ts               wire up routes, auth, and the MCP handler
+├── config.ts            every setting, read from the environment
+├── auth/                the OAuth broker — read docs/AUTH.md before changing it
+│   ├── broker.ts          /oauth/authorize, /callback, /token, /register
+│   ├── clients.ts         how a calling MCP client proves its redirect URIs are its own
+│   ├── verifier.ts        validating the bearer token on every request
+│   └── store.ts           short-lived state, in memory
+├── unimicro/api.ts      a thin typed wrapper over the Unimicro REST API
+└── tools/               ← your code goes here
+    ├── index.ts           the one-line registry
+    ├── context.ts         what every tool is handed
+    └── check-access.ts    the only tool: verify API access. Copy it.
 ```
 
-Three tools ship by default:
-
-| Tool | What it does |
-|---|---|
-| `list_companies` | The companies the signed-in user can act for |
-| `find_customers` | Search customers by name, org. number, or customer number |
-| `create_customer` | Create a customer — **asks the user to confirm first** |
+`check_api_access` calls `GET /api/init/companies` and reports the API it reached, the
+companies the user can act on, and which one other tools will default to. It exists to
+prove the setup works and to be the shape you copy.
 
 ---
 
 ## Add your own tool
 
-Write a file in `src/tools/`, then add one line to `src/tools/index.ts`. The whole thing:
+Write a file in `src/tools/`, add one line to `src/tools/index.ts`. That is the whole
+registry — there is no reflection and nothing else to keep in sync.
 
 ```ts
 import { z } from 'zod';
@@ -95,13 +95,15 @@ export function registerInvoiceTools(server: McpServer, ctx: ToolContext): void 
         'find_invoices',
         {
             title: 'Find invoices',
-            description: 'List invoices for a company, newest first.',
+            description: 'List invoices for a company, newest first. Returns at most 50.',
             inputSchema: z.object({
                 limit: z.number().int().min(1).max(50).default(10).describe('Maximum rows.'),
                 companyKey: z.string().uuid().optional().describe('Which company. Omit unless told it is ambiguous.'),
             }),
-            outputSchema: z.object({ invoices: z.array(z.object({ id: z.number(), amount: z.number() })) }),
-            annotations: { readOnlyHint: true },
+            outputSchema: z.object({
+                invoices: z.array(z.object({ id: z.number(), amount: z.number() })),
+            }),
+            annotations: { readOnlyHint: true, openWorldHint: true },
         },
         async ({ limit, companyKey }) => {
             const company = await ctx.resolveCompanyKey(companyKey);
@@ -120,45 +122,40 @@ export function registerInvoiceTools(server: McpServer, ctx: ToolContext): void 
 }
 ```
 
-`docs/ADDING-A-TOOL.md` covers the rest: how to write a description a model actually
-follows, when to use `outputSchema`, and how to make a write tool ask before it acts.
+[docs/ADDING-A-TOOL.md](docs/ADDING-A-TOOL.md) covers the rest: writing a description a
+model actually follows, and making a write tool ask the user before it acts.
 
 ---
 
 ## Testing
 
 ```bash
-npm test
-```
-
-38 tests cover the OAuth broker's refusals, the discovery documents, and every tool over
-real HTTP with the identity provider and the Unimicro API stubbed. They are also the
-clearest specification of the wire format — read `test/mcp.test.ts` if a client is
-behaving oddly.
-
-```bash
+npm test          # 35 tests
 npm run typecheck
 npm run build
 ```
+
+The tests cover the OAuth broker's refusals, the discovery documents, and the tool over
+real HTTP with the identity provider and Unimicro API stubbed. `test/mcp.test.ts` is the
+clearest specification of the wire format — read it when a client misbehaves.
 
 ---
 
 ## Going to production
 
-This template is deliberately small, and a few of its choices are only right for a
-single instance serving a test environment:
+A few choices here are only right for a single instance against a test environment:
 
 | What | Why it's fine here | What to change |
 |---|---|---|
 | Broker state in memory (`src/auth/store.ts`) | One process, short-lived state | Move to Redis for more than one replica |
-| DCR registrations lost on restart | Clients re-register automatically | Persist them, or rely on CIMD only |
+| Registrations lost on restart | Clients re-register automatically | Persist them, or rely on CIMD only |
 | Upstream tokens passed straight through | This server fronts the very API the token is for | Read [docs/AUTH.md](docs/AUTH.md) before fronting anything else |
 | Test environment by default | Nothing real can break | Change `UNIMICRO_ISSUER` and `UNIMICRO_API_BASE_URL`, and re-register your app |
 
 `PUBLIC_URL` must be HTTPS anywhere but localhost — the server refuses to start
 otherwise, because an OAuth issuer over plain HTTP is not one.
 
-A `Dockerfile` is included and needs no arguments beyond the environment.
+A `Dockerfile` is included and needs nothing beyond the environment.
 
 ---
 

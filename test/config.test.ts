@@ -12,7 +12,7 @@ describe('configuration', () => {
         const config = loadConfig(TEST_ENV);
         expect(config.issuer.origin).toBe('https://test-login.unimicro.no');
         expect(config.apiBaseUrl.origin).toBe('https://test.unimicro.no');
-        expect(config.resourceUrl.href).toBe('http://localhost:5008/mcp');
+        expect(config.resourceUrl.href).toBe('http://localhost:3000/mcp');
         expect(config.isLocalhost).toBe(true);
     });
 

@@ -1,16 +1,16 @@
 # Connecting a client
 
-The server speaks **stateless Streamable HTTP** at `http://localhost:5008/mcp` and acts
+The server speaks **stateless Streamable HTTP** at `http://localhost:3000/mcp` and acts
 as its own OAuth authorization server in front of Unimicro's identity provider, so every
 client below signs in the same way: it discovers the authorization server from a `401`,
 sends you to Unimicro, and comes back with a token.
 
 | | |
 |---|---|
-| MCP endpoint | `http://localhost:5008/mcp` |
-| Protected resource metadata | `http://localhost:5008/.well-known/oauth-protected-resource/mcp` |
-| Authorization server metadata | `http://localhost:5008/.well-known/oauth-authorization-server` |
-| Health | `http://localhost:5008/health` |
+| MCP endpoint | `http://localhost:3000/mcp` |
+| Protected resource metadata | `http://localhost:3000/.well-known/oauth-protected-resource/mcp` |
+| Authorization server metadata | `http://localhost:3000/.well-known/oauth-authorization-server` |
+| Health | `http://localhost:3000/health` |
 
 No TLS certificate is needed locally — the server runs on plain HTTP on localhost, which
 is the one place an OAuth issuer may do so.
@@ -21,13 +21,14 @@ is the one place an OAuth issuer may do so.
 npx @modelcontextprotocol/inspector
 ```
 
-Transport **Streamable HTTP**, URL `http://localhost:5008/mcp`, then Connect. Sign in
-when the browser opens; the tool list appears when you land back.
+Transport **Streamable HTTP**, URL `http://localhost:3000/mcp`, then Connect. Sign in
+when the browser opens, then call `check_api_access` — it reports which companies your
+account can reach, which confirms the whole chain works.
 
 ## Claude Code
 
 ```bash
-claude mcp add --transport http unimicro http://localhost:5008/mcp
+claude mcp add --transport http unimicro http://localhost:3000/mcp
 ```
 
 ## Claude Desktop
@@ -40,7 +41,7 @@ Add to `claude_desktop_config.json` (macOS:
   "mcpServers": {
     "unimicro": {
       "command": "npx",
-      "args": ["-y", "mcp-remote", "http://localhost:5008/mcp", "--transport", "http-only"]
+      "args": ["-y", "mcp-remote", "http://localhost:3000/mcp", "--transport", "http-only"]
     }
   }
 }
@@ -66,7 +67,7 @@ Useful when a client is misbehaving and you want to see the wire. The 2026-07-28
 is strict: routing headers on the outside, a `_meta` envelope on the inside.
 
 ```bash
-curl -sN -X POST http://localhost:5008/mcp \
+curl -sN -X POST http://localhost:3000/mcp \
   -H 'Authorization: Bearer <token>' \
   -H 'Content-Type: application/json' \
   -H 'Accept: application/json, text/event-stream' \
@@ -81,15 +82,15 @@ curl -sN -X POST http://localhost:5008/mcp \
 Calling a tool adds an `Mcp-Name` header naming it:
 
 ```bash
-curl -sN -X POST http://localhost:5008/mcp \
+curl -sN -X POST http://localhost:3000/mcp \
   -H 'Authorization: Bearer <token>' \
   -H 'Content-Type: application/json' \
   -H 'Accept: application/json, text/event-stream' \
   -H 'MCP-Protocol-Version: 2026-07-28' \
   -H 'Mcp-Method: tools/call' \
-  -H 'Mcp-Name: list_companies' \
+  -H 'Mcp-Name: check_api_access' \
   -d '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{
-        "name":"list_companies","arguments":{},
+        "name":"check_api_access","arguments":{},
         "_meta":{"io.modelcontextprotocol/protocolVersion":"2026-07-28",
                  "io.modelcontextprotocol/clientInfo":{"name":"curl","version":"1.0.0"},
                  "io.modelcontextprotocol/clientCapabilities":{}}}}'

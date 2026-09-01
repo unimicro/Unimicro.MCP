@@ -46,7 +46,7 @@ Everything starts from a `401`:
 
 ```
 WWW-Authenticate: Bearer error="invalid_token",
-                  resource_metadata="http://localhost:5008/.well-known/oauth-protected-resource/mcp"
+                  resource_metadata="http://localhost:3000/.well-known/oauth-protected-resource/mcp"
 ```
 
 | Document | Serves |

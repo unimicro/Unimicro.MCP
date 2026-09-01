@@ -7,14 +7,14 @@ import { z } from 'zod';
  * to `.env`, fill in the two Unimicro credentials, and run.
  */
 const schema = z.object({
-    PORT: z.coerce.number().int().positive().default(5008),
+    PORT: z.coerce.number().int().positive().default(3000),
 
     /**
      * The public origin this server is reachable on. It is the OAuth issuer
      * identifier and the base of every URL advertised in discovery documents,
      * so it must match what clients actually dial — including the port.
      */
-    PUBLIC_URL: z.url().default('http://localhost:5008'),
+    PUBLIC_URL: z.url().default('http://localhost:3000'),
 
     /** Unimicro's identity provider. Test by default; never point a fork at production without reading docs/AUTH.md. */
     UNIMICRO_ISSUER: z.url().default('https://test-login.unimicro.no'),
