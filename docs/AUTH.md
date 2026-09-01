@@ -5,25 +5,40 @@ OAuth **authorization server** (MCP clients sign in through it). The second role
 only because of a mismatch, and understanding that mismatch is the key to the whole
 directory.
 
-## Before anyone can sign in
+## Registering the app: the whole journey
 
-Two things must be true on Unimicro's side, and neither is visible from the code:
+Getting from "no app" to "a user can sign in" takes more steps than the code suggests,
+and most of them are on Unimicro's side. In order:
 
-1. **The client's callback URL is exactly `<PUBLIC_URL>/oauth/callback`.** Anything else
-   ends the sign-in on a Unimicro error page.
-2. **The app is activated for the company the user signs in with.** A newly registered
-   app is not. The sign-in reaches Unimicro, the user is recognised, and then it stops
-   with *"Du har ikke tilgang til &lt;app&gt; — produktet du prøver å aktivere er ikke
-   tilgjengelig for ditt/dine selskap."*
+1. **Create the application** at [developer.unimicro.no](https://developer.unimicro.no/portal/applications).
+2. **Add a client** to it (see [Client types](#client-types)) and set its callback URL to
+   exactly `<PUBLIC_URL>/oauth/callback` — for local development,
+   `http://localhost:3000/oauth/callback`.
+3. **Create a release**, write release notes, and tick the platforms to publish to
+   (`Uni Economy` for the standard Unimicro environment).
+4. **Send it to review.** The release goes from *Draft created* to *In review*.
+5. **Wait for Unimicro to approve it.** This is a human step and there is nothing you can
+   do to speed it up from your side.
+6. Once approved, the app appears under **Markedsplass → Integrasjoner** in the ERP, and
+   a user can activate it for their company.
+7. **Only then does sign-in work.**
 
-The second one catches everybody. Creating a release draft and setting *Initial purchase
-status* to Active does **not** clear it: the app has to actually reach the company's
-marketplace (Markedsplass → Integrasjoner), which for a new app means going through
-Unimicro's publishing review. Until then the app works for nobody, and no amount of
-configuration on this side changes that.
+Until step 6, every sign-in attempt reaches Unimicro, recognises the user, and stops with:
 
-If you are inside Unimicro, ask the platform team to provision the app for your test
-company. If you are external, use an app that is already activated.
+> *Du har ikke tilgang til &lt;app&gt; — produktet du prøver å aktivere er ikke
+> tilgjengelig for ditt/dine selskap.*
+
+That message means the app is not yet available to the company. It is **not** a
+configuration error in this server, and none of these clear it: creating a release draft,
+setting *Initial purchase status* to Active, or ticking platforms without submitting.
+The app has to actually be approved and reach the company's marketplace.
+
+Plan for this. If you are prototyping and cannot wait for review, develop against an app
+that is already approved and activated for your test company.
+
+The other failure, and the more common one once you are past review: **the callback URL
+must match exactly.** Anything else ends the sign-in on a Unimicro error page whose text
+does not tell you that is the cause.
 
 ## Client types
 

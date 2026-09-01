@@ -30,9 +30,10 @@ http://localhost:3000/oauth/callback
 Either client type works — a **Mobile/native app** (public, no secret) or a
 **Regular web app** (confidential, has a secret). The public one is less to manage.
 
-Your app must also be **activated for the company you sign in with**. A brand-new app is
-not, and the sign-in stops with *"Du har ikke tilgang til …"*. See
-[docs/AUTH.md](docs/AUTH.md#before-anyone-can-sign-in).
+Registering the app is not the last step. It must be **released, reviewed by Unimicro, and
+activated for the company you sign in with** before anyone can log in — until then the
+sign-in stops with *"Du har ikke tilgang til …"*. Budget for the review.
+[docs/AUTH.md](docs/AUTH.md#registering-the-app-the-whole-journey) walks the whole sequence.
 
 **2. Install and configure:**
 

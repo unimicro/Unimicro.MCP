@@ -27,9 +27,11 @@ Then edit `.env` and set two values:
 **The client's callback URL must be exactly `http://localhost:3000/oauth/callback`.** A
 mismatch is the most common failure and Unimicro's error message for it is unhelpful.
 
-**The app must also be activated for the company being signed in with.** A newly created
-app is not, and sign-in stops at *"Du har ikke tilgang til …"*. This is not something you
-can fix in code or in the portal alone — see docs/AUTH.md.
+**The app must also be approved by Unimicro and activated for the company.** Registering
+it is not enough: the release has to be sent to review, approved by a human at Unimicro,
+and then activated for the company under Markedsplass → Integrasjoner. Until that
+happens, sign-in stops at *"Du har ikke tilgang til …"*. You cannot fix this in code or
+by changing portal settings — see docs/AUTH.md for the full sequence.
 
 You cannot register the app yourself — it needs a human with a Unimicro account. Ask for
 the two credentials rather than guessing.
@@ -122,7 +124,7 @@ the company through `ctx.resolveCompanyKey()`, and confirming writes with
 | Server exits with `Invalid configuration` | `.env` missing or incomplete. The message names the variable. |
 | `Parse error: Invalid JSON` from `/mcp` | Request is missing the `_meta` envelope, or `Content-Type` is not `application/json`. |
 | Sign-in ends on a Unimicro error page | The client's callback URL is not exactly `<PUBLIC_URL>/oauth/callback`. |
-| Sign-in shows "Du har ikke tilgang til \<app\>" | The app is not activated for that company. Not a code problem — see docs/AUTH.md. |
+| Sign-in shows "Du har ikke tilgang til \<app\>" | The app is not approved and activated for that company yet. Not a code problem — see docs/AUTH.md. |
 | `Unknown client_id` on `/oauth/authorize` | Client registered before a restart. Registrations are in memory; reconnect the client. |
 | Server refuses to start, "must use https" | `PUBLIC_URL` is plain HTTP and not localhost. Correct — do not work around it. |
 | Tool reports several companies | Working as intended. Pass one as `companyKey`. |
