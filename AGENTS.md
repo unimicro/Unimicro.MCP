@@ -21,11 +21,15 @@ Then edit `.env` and set two values:
 
 | Variable | Where it comes from |
 |---|---|
-| `UNIMICRO_CLIENT_ID` | An app registered at https://developer.unimicro.no/portal/applications |
-| `UNIMICRO_CLIENT_SECRET` | Same app |
+| `UNIMICRO_CLIENT_ID` | A client on an app registered at https://developer.unimicro.no/portal/applications |
+| `UNIMICRO_CLIENT_SECRET` | The same client, if it is a "Regular web app". Leave blank for a "Mobile/native app" — that type is a public client and authenticates with PKCE alone. |
 
-**The app's redirect URI must be exactly `http://localhost:3000/oauth/callback`.** A
+**The client's callback URL must be exactly `http://localhost:3000/oauth/callback`.** A
 mismatch is the most common failure and Unimicro's error message for it is unhelpful.
+
+**The app must also be activated for the company being signed in with.** A newly created
+app is not, and sign-in stops at *"Du har ikke tilgang til …"*. This is not something you
+can fix in code or in the portal alone — see docs/AUTH.md.
 
 You cannot register the app yourself — it needs a human with a Unimicro account. Ask for
 the two credentials rather than guessing.
@@ -117,7 +121,8 @@ the company through `ctx.resolveCompanyKey()`, and confirming writes with
 |---|---|
 | Server exits with `Invalid configuration` | `.env` missing or incomplete. The message names the variable. |
 | `Parse error: Invalid JSON` from `/mcp` | Request is missing the `_meta` envelope, or `Content-Type` is not `application/json`. |
-| Sign-in ends on a Unimicro error page | Registered redirect URI is not exactly `<PUBLIC_URL>/oauth/callback`. |
+| Sign-in ends on a Unimicro error page | The client's callback URL is not exactly `<PUBLIC_URL>/oauth/callback`. |
+| Sign-in shows "Du har ikke tilgang til \<app\>" | The app is not activated for that company. Not a code problem — see docs/AUTH.md. |
 | `Unknown client_id` on `/oauth/authorize` | Client registered before a restart. Registrations are in memory; reconnect the client. |
 | Server refuses to start, "must use https" | `PUBLIC_URL` is plain HTTP and not localhost. Correct — do not work around it. |
 | Tool reports several companies | Working as intended. Pass one as `companyKey`. |

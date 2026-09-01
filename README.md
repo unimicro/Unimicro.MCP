@@ -20,12 +20,19 @@ Building this with an AI agent? Point it at [AGENTS.md](AGENTS.md).
 You need [Node.js 22+](https://nodejs.org) and a Unimicro test account. No database, no
 Docker, no local certificates.
 
-**1. Register an app** at [developer.unimicro.no](https://developer.unimicro.no/portal/applications)
-with this redirect URI:
+**1. Register an app** at [developer.unimicro.no](https://developer.unimicro.no/portal/applications),
+add a client to it, and set the client's callback URL to exactly:
 
 ```
 http://localhost:3000/oauth/callback
 ```
+
+Either client type works — a **Mobile/native app** (public, no secret) or a
+**Regular web app** (confidential, has a secret). The public one is less to manage.
+
+Your app must also be **activated for the company you sign in with**. A brand-new app is
+not, and the sign-in stops with *"Du har ikke tilgang til …"*. See
+[docs/AUTH.md](docs/AUTH.md#before-anyone-can-sign-in).
 
 **2. Install and configure:**
 
@@ -130,7 +137,7 @@ model actually follows, and making a write tool ask the user before it acts.
 ## Testing
 
 ```bash
-npm test          # 35 tests
+npm test          # 37 tests
 npm run typecheck
 npm run build
 ```

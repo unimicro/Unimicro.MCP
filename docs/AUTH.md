@@ -5,6 +5,38 @@ OAuth **authorization server** (MCP clients sign in through it). The second role
 only because of a mismatch, and understanding that mismatch is the key to the whole
 directory.
 
+## Before anyone can sign in
+
+Two things must be true on Unimicro's side, and neither is visible from the code:
+
+1. **The client's callback URL is exactly `<PUBLIC_URL>/oauth/callback`.** Anything else
+   ends the sign-in on a Unimicro error page.
+2. **The app is activated for the company the user signs in with.** A newly registered
+   app is not. The sign-in reaches Unimicro, the user is recognised, and then it stops
+   with *"Du har ikke tilgang til &lt;app&gt; — produktet du prøver å aktivere er ikke
+   tilgjengelig for ditt/dine selskap."*
+
+The second one catches everybody. Creating a release draft and setting *Initial purchase
+status* to Active does **not** clear it: the app has to actually reach the company's
+marketplace (Markedsplass → Integrasjoner), which for a new app means going through
+Unimicro's publishing review. Until then the app works for nobody, and no amount of
+configuration on this side changes that.
+
+If you are inside Unimicro, ask the platform team to provision the app for your test
+company. If you are external, use an app that is already activated.
+
+## Client types
+
+Unimicro offers several client types on an app; two suit this server:
+
+| Type | Secret | Notes |
+|---|---|---|
+| **Mobile/native app** | none | A public client: PKCE alone authenticates it. Leave `UNIMICRO_CLIENT_SECRET` blank. Less to store and rotate. |
+| **Regular web app** | yes | A confidential client. Set `UNIMICRO_CLIENT_SECRET` too. |
+
+The broker sends `client_secret` upstream only when one is configured, so both work
+unchanged. Unimicro's own MCP server uses the public variety.
+
 ## The mismatch
 
 An MCP client — Claude Desktop, the Inspector, something you wrote — expects to walk up
@@ -14,8 +46,7 @@ to a server it has never seen and:
 2. run a PKCE authorization code flow as a public client.
 
 Unimicro's identity provider allows neither. Apps are registered by hand at
-developer.unimicro.no, their redirect URIs are fixed at registration time, and its token
-endpoint advertises no `none` authentication method — every client is confidential.
+developer.unimicro.no and their callback URLs are fixed at registration time.
 
 So this server stands in the middle. **Downstream** it is an authorization server that
 any MCP client can register with and use. **Upstream** it is one pre-registered
@@ -125,10 +156,11 @@ you do, any Unimicro token from anywhere is a valid credential for your server.
 | Variable | Meaning |
 |---|---|
 | `PUBLIC_URL` | This server's public origin. It is the OAuth issuer identifier and the base of every advertised URL, so it must match what clients dial, port included. HTTPS required off localhost. |
-| `UNIMICRO_CLIENT_ID` / `UNIMICRO_CLIENT_SECRET` | Your app from developer.unimicro.no. The secret is upstream-only and never leaves the server. |
+| `UNIMICRO_CLIENT_ID` | The client on your app from developer.unimicro.no. |
+| `UNIMICRO_CLIENT_SECRET` | Only for a confidential ("Regular web app") client. Upstream-only; it never leaves the server. Blank for a public client. |
 | `UNIMICRO_ISSUER` | The identity provider. `https://test-login.unimicro.no` by default. |
 | `UNIMICRO_SCOPES` | What to request upstream. Trim to least privilege. |
 
-The redirect URI you register upstream must be exactly `<PUBLIC_URL>/oauth/callback`.
+The callback URL you register upstream must be exactly `<PUBLIC_URL>/oauth/callback`.
 Getting this wrong is the single most common setup failure, and Unimicro's error for it
 is unhelpful.

@@ -23,12 +23,19 @@ const schema = z.object({
     UNIMICRO_API_BASE_URL: z.url().default('https://test.unimicro.no'),
 
     /**
-     * Credentials for the app you registered at developer.unimicro.no.
-     * Unimicro does not offer dynamic registration and its token endpoint has
-     * no `none` auth method, so this server is a confidential OAuth client.
+     * The app you registered at developer.unimicro.no. Unimicro offers no
+     * dynamic registration, so this id is fixed at registration time.
      */
     UNIMICRO_CLIENT_ID: z.string().min(1, 'UNIMICRO_CLIENT_ID is required — register an app at https://developer.unimicro.no/portal/applications'),
-    UNIMICRO_CLIENT_SECRET: z.string().min(1, 'UNIMICRO_CLIENT_SECRET is required'),
+
+    /**
+     * The secret for that app, when it has one.
+     *
+     * A "Regular web app" client is confidential and needs it. A
+     * "Mobile/native app" client is public: it authenticates with PKCE alone,
+     * and this is left empty. Both work — see docs/AUTH.md.
+     */
+    UNIMICRO_CLIENT_SECRET: z.string().optional(),
 
     /** Scopes requested upstream. Trim this to the least privilege your tools need. */
     UNIMICRO_SCOPES: z.string().default('openid profile offline_access AppFramework'),
@@ -47,7 +54,7 @@ export type Config = Readonly<{
     issuer: URL;
     apiBaseUrl: URL;
     clientId: string;
-    clientSecret: string;
+    clientSecret: string | undefined;
     scopes: string[];
     allowedOrigins: string[];
     logLevel: 'debug' | 'info' | 'warn' | 'error';
@@ -77,7 +84,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
         issuer: new URL(e.UNIMICRO_ISSUER),
         apiBaseUrl: new URL(e.UNIMICRO_API_BASE_URL),
         clientId: e.UNIMICRO_CLIENT_ID,
-        clientSecret: e.UNIMICRO_CLIENT_SECRET,
+        clientSecret: e.UNIMICRO_CLIENT_SECRET || undefined,
         scopes: e.UNIMICRO_SCOPES.split(/\s+/).filter(Boolean),
         allowedOrigins: e.ALLOWED_ORIGINS.split(',').map(s => s.trim()).filter(Boolean),
         logLevel: e.LOG_LEVEL,

@@ -266,7 +266,13 @@ export function createAuthBroker(config: Config) {
         res.json(issued.tokens);
     });
 
-    /** POST to Unimicro's token endpoint as our confidential client. */
+    /**
+     * POST to Unimicro's token endpoint as our upstream client.
+     *
+     * The secret is sent only when the registered app has one. A public
+     * client (Unimicro's "Mobile/native app" type) authenticates with the
+     * PKCE verifier alone, and sending an empty secret would be rejected.
+     */
     async function exchangeUpstream(params: Record<string, string>): Promise<UpstreamTokens | undefined> {
         const response = await fetch(upstreamToken, {
             method: 'POST',
@@ -274,7 +280,7 @@ export function createAuthBroker(config: Config) {
             body: new URLSearchParams({
                 ...params,
                 client_id: config.clientId,
-                client_secret: config.clientSecret,
+                ...(config.clientSecret ? { client_secret: config.clientSecret } : {}),
             }),
             signal: AbortSignal.timeout(15_000),
         }).catch(() => undefined);

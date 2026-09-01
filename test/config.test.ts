@@ -3,9 +3,17 @@ import { loadConfig } from '../src/config.js';
 import { TEST_ENV } from './helpers.js';
 
 describe('configuration', () => {
-    it('names the missing variables when credentials are absent', () => {
+    it('names the missing variable when the client id is absent', () => {
         expect(() => loadConfig({})).toThrow(/UNIMICRO_CLIENT_ID/);
-        expect(() => loadConfig({})).toThrow(/UNIMICRO_CLIENT_SECRET/);
+    });
+
+    it('accepts a public client, which has no secret', () => {
+        const { UNIMICRO_CLIENT_SECRET, ...publicClient } = TEST_ENV;
+        expect(loadConfig(publicClient).clientSecret).toBeUndefined();
+    });
+
+    it('keeps the secret for a confidential client', () => {
+        expect(loadConfig(TEST_ENV).clientSecret).toBe('test-client-secret');
     });
 
     it('defaults to the Unimicro test environment', () => {
