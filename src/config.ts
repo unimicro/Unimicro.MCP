@@ -5,6 +5,10 @@ import { z } from 'zod';
  * same row as the issuer you point at, or sign-in fails with an error that
  * never mentions environments.
  *
+ * `test` is the default because it is the one external developers reach:
+ * developer.unimicro.no signs in against test-login and takes a GitHub sign-up.
+ * `dev` is Unimicro's own lane and needs an account there.
+ *
  * Pick one with `UNIMICRO_ENV`; the individual URLs below override it when you
  * need something these rows do not cover.
  */
@@ -48,7 +52,7 @@ const schema = z.object({
      * Which Unimicro environment to talk to. This is the one switch: it sets the
      * identity provider and the API together, so they cannot drift apart.
      */
-    UNIMICRO_ENV: z.enum(['dev', 'test']).default('dev'),
+    UNIMICRO_ENV: z.enum(['dev', 'test']).default('test'),
 
     /** Overrides `UNIMICRO_ENV`'s identity provider. Rarely needed. */
     UNIMICRO_ISSUER: z.url().optional(),

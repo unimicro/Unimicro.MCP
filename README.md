@@ -14,43 +14,13 @@ Building with an AI agent? Point it at [AGENTS.md](AGENTS.md).
 
 ---
 
-## Which environment am I in?
-
-Unimicro runs several environments. Each is a **matched set** — portal, login and API —
-and mixing them across sets is the single easiest way to lose an hour, because everything
-looks fine until sign-in fails with an error that never mentions environments.
-
-| `UNIMICRO_ENV` | Portal (register here) | Login | API |
-|---|---|---|---|
-| `dev` *(default)* | `dev-developer.unimicro.no` | `dev-login.unimicro.no` | `dev.unimicro.no` |
-| `test` | `developer.unimicro.no` | `test-login.unimicro.no` | `test.unimicro.no` |
-
-Switching is one line in `.env`:
-
-```bash
-UNIMICRO_ENV=test
-```
-
-That moves the login host and the API together, so they cannot drift apart. **Register in
-the portal on the same row** — credentials are per-environment, both portals render the
-same page title, and every hostname answers normally, so a mismatch gives you no signal
-until sign-in fails with an error that never mentions environments.
-
-The startup banner prints which environment it resolved. If you override `UNIMICRO_ISSUER`
-or `UNIMICRO_API_BASE_URL` individually and end up with a mixed pair, it says `custom`.
-
-Production hostnames differ again. Don't point a fork there without reading
-[docs/AUTH.md](docs/AUTH.md).
-
----
-
 ## Setup
 
 You need [Node.js 22+](https://nodejs.org). No database, no Docker, no certificates.
 
 ### 1. Get a developer account
 
-Sign up at **[dev-developer.unimicro.no](https://dev-developer.unimicro.no/portal/onboarding)**
+Sign up at **[developer.unimicro.no](https://developer.unimicro.no/portal/onboarding)**
 using the GitHub button. Provisioning is immediate — no email, no waiting for approval —
 and you end up with a developer licence, a test company, and a **Demo application** to
 build on.
@@ -219,7 +189,6 @@ This is the only troubleshooting table in the repo; the other docs link here.
 | Sign-in ends on a Unimicro error page ("Uffda!") | The page hides the reason. Open **Diagnostics** in the developer portal — it lists the real error against your application, newest first. Check the callback URL is **exactly** `<PUBLIC_URL>/oauth/callback` first, since that is the common cause. |
 | `invalid_scope` during sign-in | `UNIMICRO_SCOPES` asks for something your client doesn't have. Match it to the client's scope list in the portal. |
 | Sign-in works, tools fail | The client is missing the `AppFramework` scope. Set the access level, then recreate the client — a client keeps the scopes it was born with. |
-| Sign-in fails and nothing above fits | Environment mismatch: credentials from one environment, `UNIMICRO_ENV` pointing at another. Check the banner, and decode your token at [jwt.io](https://jwt.io) — `aud` names the environment it came from. |
 | Saving the application does nothing | **Category** is empty. It is required. |
 | Your client must sign in again every hour | Tokens last one hour and no refresh token is issued by default. See `UNIMICRO_SCOPES` in `.env.example`. |
 | `Unknown client_id` on `/oauth/authorize` | The MCP client registered before a restart. Registrations are in memory — reconnect it. |

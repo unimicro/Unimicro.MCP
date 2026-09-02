@@ -24,7 +24,7 @@ Then fill in `.env`:
 |---|---|
 | `UNIMICRO_CLIENT_ID` | A client on an application in the developer portal |
 | `UNIMICRO_CLIENT_SECRET` | Same client, only if it is a "Regular web app". Blank for "Mobile/native app". |
-| `UNIMICRO_ENV` | `dev` (default) or `test`. Sets identity and API together. Must match the portal the credentials came from. |
+| `UNIMICRO_ENV` | `test` (default) or `dev`. Sets identity and API together. Must match the portal the credentials came from — `test` is developer.unimicro.no, which is where an external developer signs up. |
 
 **You cannot create these yourself** — they need a human with a Unimicro developer
 account. Ask for them rather than guessing.

@@ -79,7 +79,7 @@ describe('authorization request', () => {
 
         expect(response.status).toBe(302);
         const location = new URL(response.headers.get('location')!);
-        expect(location.origin).toBe('https://dev-login.unimicro.no');
+        expect(location.origin).toBe('https://test-login.unimicro.no');
         expect(location.pathname).toBe('/connect/authorize');
         expect(location.searchParams.get('client_id')).toBe('test-client-id');
         expect(location.searchParams.get('code_challenge_method')).toBe('S256');
@@ -148,7 +148,7 @@ describe('authorization request', () => {
 
 describe('callback from the identity provider', () => {
     it('rejects a callback whose login it never issued', async () => {
-        const response = await get(`${app.baseUrl}/oauth/callback?code=x&state=fabricated&iss=https://dev-login.unimicro.no`);
+        const response = await get(`${app.baseUrl}/oauth/callback?code=x&state=fabricated&iss=https://test-login.unimicro.no`);
         expect(response.status).toBe(400);
     });
 
@@ -198,7 +198,7 @@ describe('token endpoint', () => {
             return realFetch(input, init);
         });
 
-        const callback = await get(`${app.baseUrl}/oauth/callback?code=upstream-code&state=${state}&iss=https://dev-login.unimicro.no`);
+        const callback = await get(`${app.baseUrl}/oauth/callback?code=upstream-code&state=${state}&iss=https://test-login.unimicro.no`);
         const code = new URL(callback.headers.get('location')!).searchParams.get('code')!;
         expect(code).toBeTruthy();
 

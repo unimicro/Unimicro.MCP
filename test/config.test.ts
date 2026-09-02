@@ -16,23 +16,26 @@ describe('configuration', () => {
         expect(loadConfig(TEST_ENV).clientSecret).toBe('test-client-secret');
     });
 
-    it('defaults to the environment the sign-up in the README provisions', () => {
+    it('defaults to the environment an external developer signs up for', () => {
+        // developer.unimicro.no is the portal the README sends people to, and it
+        // authenticates against test-login. Defaulting anywhere else hands a new
+        // fork credentials that cannot work.
         const config = loadConfig(TEST_ENV);
-        expect(config.environment).toBe('dev');
-        expect(config.issuer.origin).toBe('https://dev-login.unimicro.no');
-        expect(config.apiBaseUrl.origin).toBe('https://dev.unimicro.no');
-        expect(config.portalUrl?.origin).toBe('https://dev-developer.unimicro.no');
+        expect(config.environment).toBe('test');
+        expect(config.issuer.origin).toBe('https://test-login.unimicro.no');
+        expect(config.apiBaseUrl.origin).toBe('https://test.unimicro.no');
+        expect(config.portalUrl?.origin).toBe('https://developer.unimicro.no');
         expect(config.resourceUrl.href).toBe('http://localhost:3000/mcp');
         expect(config.isLocalhost).toBe(true);
     });
 
     it('switches identity and API together on UNIMICRO_ENV', () => {
         // One switch: the pair must never be moved independently by accident.
-        const config = loadConfig({ ...TEST_ENV, UNIMICRO_ENV: 'test' });
-        expect(config.environment).toBe('test');
-        expect(config.issuer.origin).toBe('https://test-login.unimicro.no');
-        expect(config.apiBaseUrl.origin).toBe('https://test.unimicro.no');
-        expect(config.portalUrl?.origin).toBe('https://developer.unimicro.no');
+        const config = loadConfig({ ...TEST_ENV, UNIMICRO_ENV: 'dev' });
+        expect(config.environment).toBe('dev');
+        expect(config.issuer.origin).toBe('https://dev-login.unimicro.no');
+        expect(config.apiBaseUrl.origin).toBe('https://dev.unimicro.no');
+        expect(config.portalUrl?.origin).toBe('https://dev-developer.unimicro.no');
     });
 
     it('rejects an environment name that is not a known one', () => {
