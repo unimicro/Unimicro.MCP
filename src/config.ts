@@ -1,9 +1,9 @@
 import { z } from 'zod';
 
 /**
- * Unimicro's environments. Each is a matched set: register in the portal on the
- * same row as the issuer you point at, or sign-in fails with an error that
- * never mentions environments.
+ * Unimicro's environments. Each is a matched set: the credentials you registered
+ * only work against the lane they were issued for, and a mismatch fails sign-in
+ * with an error that never mentions environments. Both lanes share one portal.
  *
  * `test` is the default because it is the one external developers reach:
  * developer.unimicro.no signs in against test-login and takes a GitHub sign-up.
@@ -16,7 +16,7 @@ export const ENVIRONMENTS = {
     dev: {
         issuer: 'https://dev-login.unimicro.no',
         api: 'https://dev.unimicro.no',
-        portal: 'https://dev-developer.unimicro.no',
+        portal: 'https://developer.unimicro.no',
     },
     test: {
         issuer: 'https://test-login.unimicro.no',

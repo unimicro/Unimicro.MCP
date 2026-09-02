@@ -35,7 +35,7 @@ describe('configuration', () => {
         expect(config.environment).toBe('dev');
         expect(config.issuer.origin).toBe('https://dev-login.unimicro.no');
         expect(config.apiBaseUrl.origin).toBe('https://dev.unimicro.no');
-        expect(config.portalUrl?.origin).toBe('https://dev-developer.unimicro.no');
+        expect(config.portalUrl?.origin).toBe('https://developer.unimicro.no');
     });
 
     it('rejects an environment name that is not a known one', () => {
@@ -61,7 +61,7 @@ describe('configuration', () => {
         expect(() => loadConfig({ ...noId, UNIMICRO_ENV: 'test' }))
             .toThrow(/developer\.unimicro\.no.*test environment/s);
         expect(() => loadConfig({ ...noId, UNIMICRO_ENV: 'dev' }))
-            .toThrow(/dev-developer\.unimicro\.no.*dev environment/s);
+            .toThrow(/developer\.unimicro\.no.*dev environment/s);
     });
 
     it('follows PORT when PUBLIC_URL is not set', () => {

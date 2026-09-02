@@ -121,8 +121,8 @@ one and you see:
 
 ```json
 {
-  "iss": "https://dev-login.unimicro.no",
-  "aud": ["AppFramework", "https://dev-login.unimicro.no/resources"],
+  "iss": "https://test-login.unimicro.no",
+  "aud": ["AppFramework", "https://test-login.unimicro.no/resources"],
   "client_id": "…", "sub": "…", "exp": 1788262034
 }
 ```

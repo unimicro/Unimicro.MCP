@@ -32,10 +32,10 @@ account. Ask for them rather than guessing.
 Two things about that request are worth getting right, because both are invisible until
 sign-in fails:
 
-Point them at the README rather than improvising: it has the environment table and the
-step order that matters (access level before client). Both failures are invisible until
-sign-in. When asking for credentials, say which environment you want them for — they are
-not interchangeable.
+Point them at the README rather than improvising: it has the step order that matters
+(access level before client), and `.env.example` has the environment table. Both failures
+are invisible until sign-in. When asking for credentials, say which environment you want
+them for — they are not interchangeable, and test is the default.
 
 ## Run
 
