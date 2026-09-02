@@ -216,7 +216,7 @@ This is the only troubleshooting table in the repo; the other docs link here.
 |---|---|
 | First line of startup says `dangerouslyAllowInsecureIssuerUrl` | Expected on localhost. Not a misconfiguration. |
 | `401` from `/mcp` | Expected without a token. Sign in through your client. |
-| Sign-in ends on a Unimicro error page | The client's callback URL must be **exactly** `<PUBLIC_URL>/oauth/callback`. |
+| Sign-in ends on a Unimicro error page ("Uffda!") | The page hides the reason. Open **Diagnostics** in the developer portal — it lists the real error against your application, newest first. Check the callback URL is **exactly** `<PUBLIC_URL>/oauth/callback` first, since that is the common cause. |
 | `invalid_scope` during sign-in | `UNIMICRO_SCOPES` asks for something your client doesn't have. Match it to the client's scope list in the portal. |
 | Sign-in works, tools fail | The client is missing the `AppFramework` scope. Set the access level, then recreate the client — a client keeps the scopes it was born with. |
 | Sign-in fails and nothing above fits | Environment mismatch: credentials from one environment, `UNIMICRO_ENV` pointing at another. Check the banner, and decode your token at [jwt.io](https://jwt.io) — `aud` names the environment it came from. |
