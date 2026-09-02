@@ -114,7 +114,7 @@ export function createAuthBroker(config: Config) {
         // redirect would itself be an open redirect. Render errors instead.
         const registration = await clients.resolve(clientId).catch(() => undefined);
         if (!registration) {
-            fail(res, `Unknown client_id "${clientId}". Register at /oauth/register, or use an HTTPS client-ID metadata document URL.`);
+            fail(res, `Unknown client_id "${echoed(clientId)}". Register at /oauth/register, or use an HTTPS client-ID metadata document URL.`);
             return;
         }
         if (!registration.redirectUris.includes(redirectUri)) {
@@ -328,7 +328,19 @@ function query(req: Request): Record<string, string | undefined> {
 }
 
 function fail(res: Response, message: string): void {
-    res.status(400).type('text/plain').send(`Authorization request rejected.\n\n${message}\n`);
+    // `nosniff` because these pages are reached before any client is trusted and
+    // may quote what the caller sent: a browser must never reinterpret this as
+    // markup.
+    res.status(400)
+        .type('text/plain')
+        .set('X-Content-Type-Options', 'nosniff')
+        .send(`Authorization request rejected.\n\n${message}\n`);
+}
+
+/** Quote caller-supplied text back safely: printable, and short. */
+function echoed(value: string): string {
+    const printable = value.replace(/[^\x20-\x7e]/g, '');
+    return printable.length > 80 ? `${printable.slice(0, 80)}…` : printable;
 }
 
 function buildRedirect(target: string, params: Record<string, string | undefined>): string {

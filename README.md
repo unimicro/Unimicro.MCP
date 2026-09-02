@@ -188,7 +188,7 @@ follows, and how a write tool asks the user before it acts.
 ## Testing
 
 ```bash
-npm test          # 39 tests
+npm test          # 42 tests
 npm run token     # a bearer token, for curl and scripts
 npm run typecheck
 npm run build

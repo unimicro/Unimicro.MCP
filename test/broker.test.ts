@@ -1,6 +1,7 @@
 import { createHash, randomBytes } from 'node:crypto';
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { fetchClientIdMetadata, isPublicAddress } from '../src/auth/clients.js';
+import { TtlStore } from '../src/auth/store.js';
 import { startApp, type RunningApp } from './helpers.js';
 
 /**
@@ -336,5 +337,49 @@ describe('hostile input', () => {
     it('survives a nested-object query parameter', async () => {
         const response = await get(`${app.baseUrl}/oauth/authorize?client_id[evil]=1&redirect_uri[x]=2`);
         expect(response.status).toBe(400);
+    });
+});
+
+describe('error pages', () => {
+    it('sends nosniff and does not echo unbounded caller input', async () => {
+        const hostile = `<script>alert(1)</script>${'A'.repeat(300)}`;
+        const response = await get(authorizeUrl({
+            client_id: hostile,
+            redirect_uri: CLIENT_REDIRECT,
+            response_type: 'code',
+            code_challenge: pkce().challenge,
+            code_challenge_method: 'S256',
+        }));
+
+        expect(response.status).toBe(400);
+        expect(response.headers.get('x-content-type-options')).toBe('nosniff');
+
+        const body = await response.text();
+        expect(body).not.toContain('A'.repeat(300));
+        expect(body.length).toBeLessThan(400);
+    });
+});
+
+describe('the in-memory store is bounded', () => {
+    it('evicts oldest-first rather than growing without limit', () => {
+        // /oauth/register is unauthenticated by design, so anyone can drive
+        // writes into this store. A TTL alone would not stop them.
+        const store = new TtlStore<number>(60_000, 3);
+        for (const k of ['a', 'b', 'c', 'd']) store.set(k, 1);
+
+        expect(store.size).toBe(3);
+        expect(store.get('a')).toBeUndefined();
+        expect(store.get('d')).toBe(1);
+    });
+
+    it('keeps a refreshed key alive when older ones are evicted', () => {
+        const store = new TtlStore<number>(60_000, 2);
+        store.set('a', 1);
+        store.set('b', 1);
+        store.set('a', 2);   // refreshes 'a', so 'b' is now the oldest
+        store.set('c', 1);
+
+        expect(store.get('a')).toBe(2);
+        expect(store.get('b')).toBeUndefined();
     });
 });

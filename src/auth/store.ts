@@ -10,18 +10,33 @@
  * replicas behind a load balancer breaks them. That is fine for local
  * development and a single container. For anything else, swap this for Redis —
  * `TtlStore` is the only interface you need to reimplement.
+ *
+ * It is bounded as well as expiring. Anyone on the internet can drive writes
+ * here — `/oauth/register` takes no authentication, by design — so a TTL alone
+ * would let a caller grow this without limit for as long as the TTL lasts.
  */
 export class TtlStore<V> {
     readonly #entries = new Map<string, { value: V; expiresAt: number }>();
     readonly #ttlMs: number;
+    readonly #maxEntries: number;
 
-    constructor(ttlMs: number) {
+    constructor(ttlMs: number, maxEntries = 10_000) {
         this.#ttlMs = ttlMs;
+        this.#maxEntries = maxEntries;
     }
 
     set(key: string, value: V): void {
         this.#sweep();
+
+        // Re-inserting moves a key to the end, so eviction stays oldest-first.
+        this.#entries.delete(key);
         this.#entries.set(key, { value, expiresAt: Date.now() + this.#ttlMs });
+
+        while (this.#entries.size > this.#maxEntries) {
+            const oldest = this.#entries.keys().next();
+            if (oldest.done) break;
+            this.#entries.delete(oldest.value);
+        }
     }
 
     get(key: string): V | undefined {

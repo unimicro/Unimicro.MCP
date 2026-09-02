@@ -4,6 +4,10 @@
   "private": true,
   "description": "Template MCP server for the Unimicro API — MCP revision 2026-07-28",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/unimicro/Unimicro.MCP.git"
+  },
   "type": "module",
   "engines": {
     "node": ">=22"
