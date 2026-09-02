@@ -283,9 +283,24 @@ export function createAuthBroker(config: Config) {
                 ...(config.clientSecret ? { client_secret: config.clientSecret } : {}),
             }),
             signal: AbortSignal.timeout(15_000),
-        }).catch(() => undefined);
+        }).catch((cause: unknown) => {
+            console.error(`Token exchange with ${config.issuer.host} could not be sent:`, cause);
+            return undefined;
+        });
 
-        if (!response?.ok) return undefined;
+        if (!response) return undefined;
+
+        if (!response.ok) {
+            // A failed token response carries an OAuth error code and nothing
+            // secret, and it is the only thing that says *why* sign-in broke.
+            // Swallowing it costs whoever is debugging this an afternoon.
+            const detail = (await response.text().catch(() => '')).slice(0, 500);
+            console.error(
+                `Token exchange with ${config.issuer.host} returned ${response.status}: ${detail || '(empty body)'}`,
+            );
+            return undefined;
+        }
+
         return (await response.json().catch(() => undefined)) as UpstreamTokens | undefined;
     }
 
