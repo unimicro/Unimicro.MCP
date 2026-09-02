@@ -18,10 +18,47 @@ describe('configuration', () => {
 
     it('defaults to the environment the sign-up in the README provisions', () => {
         const config = loadConfig(TEST_ENV);
+        expect(config.environment).toBe('dev');
         expect(config.issuer.origin).toBe('https://dev-login.unimicro.no');
         expect(config.apiBaseUrl.origin).toBe('https://dev.unimicro.no');
+        expect(config.portalUrl?.origin).toBe('https://dev-developer.unimicro.no');
         expect(config.resourceUrl.href).toBe('http://localhost:3000/mcp');
         expect(config.isLocalhost).toBe(true);
+    });
+
+    it('switches identity and API together on UNIMICRO_ENV', () => {
+        // One switch: the pair must never be moved independently by accident.
+        const config = loadConfig({ ...TEST_ENV, UNIMICRO_ENV: 'test' });
+        expect(config.environment).toBe('test');
+        expect(config.issuer.origin).toBe('https://test-login.unimicro.no');
+        expect(config.apiBaseUrl.origin).toBe('https://test.unimicro.no');
+        expect(config.portalUrl?.origin).toBe('https://developer.unimicro.no');
+    });
+
+    it('rejects an environment name that is not a known one', () => {
+        expect(() => loadConfig({ ...TEST_ENV, UNIMICRO_ENV: 'production' })).toThrow(/UNIMICRO_ENV/);
+    });
+
+    it('reports a half-overridden pair as custom rather than pretending', () => {
+        // Overriding one of the two is how a mixed set happens; the startup
+        // banner reads from this, so it has to notice.
+        const config = loadConfig({
+            ...TEST_ENV,
+            UNIMICRO_ENV: 'dev',
+            UNIMICRO_ISSUER: 'https://test-login.unimicro.no',
+        });
+        expect(config.environment).toBe('custom');
+        expect(config.portalUrl).toBeUndefined();
+        expect(config.issuer.origin).toBe('https://test-login.unimicro.no');
+        expect(config.apiBaseUrl.origin).toBe('https://dev.unimicro.no');
+    });
+
+    it('names the portal for the selected environment when credentials are missing', () => {
+        const { UNIMICRO_CLIENT_ID, ...noId } = TEST_ENV;
+        expect(() => loadConfig({ ...noId, UNIMICRO_ENV: 'test' }))
+            .toThrow(/developer\.unimicro\.no.*test environment/s);
+        expect(() => loadConfig({ ...noId, UNIMICRO_ENV: 'dev' }))
+            .toThrow(/dev-developer\.unimicro\.no.*dev environment/s);
     });
 
     it('follows PORT when PUBLIC_URL is not set', () => {

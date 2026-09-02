@@ -24,6 +24,7 @@ Then fill in `.env`:
 |---|---|
 | `UNIMICRO_CLIENT_ID` | A client on an application in the developer portal |
 | `UNIMICRO_CLIENT_SECRET` | Same client, only if it is a "Regular web app". Blank for "Mobile/native app". |
+| `UNIMICRO_ENV` | `dev` (default) or `test`. Sets identity and API together. Must match the portal the credentials came from. |
 
 **You cannot create these yourself** — they need a human with a Unimicro developer
 account. Ask for them rather than guessing.
@@ -31,9 +32,10 @@ account. Ask for them rather than guessing.
 Two things about that request are worth getting right, because both are invisible until
 sign-in fails:
 
-Point them at the README rather than improvising: it has the environment table (portal,
-login and API come as matched sets) and the step order that matters (access level before
-client). Both failures are invisible until sign-in.
+Point them at the README rather than improvising: it has the environment table and the
+step order that matters (access level before client). Both failures are invisible until
+sign-in. When asking for credentials, say which environment you want them for — they are
+not interchangeable.
 
 ## Run
 

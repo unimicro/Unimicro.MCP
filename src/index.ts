@@ -15,8 +15,13 @@ server.on('listening', () => setImmediate(() => {
     if (failed) return;
     console.log(`${SERVER_NAME} MCP server listening on ${config.publicUrl.origin}`);
     console.log(`  MCP endpoint   ${config.resourceUrl.href}`);
+    console.log(`  Environment    ${config.environment}`);
     console.log(`  Unimicro API   ${config.apiBaseUrl.origin}`);
     console.log(`  Identity       ${config.issuer.origin}`);
+    if (config.environment === 'custom') {
+        console.log('  Note: the API and identity URLs match no known environment.');
+        console.log('        Registering in the wrong portal fails only at sign-in.');
+    }
 }));
 
 /**

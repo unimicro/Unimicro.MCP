@@ -20,15 +20,24 @@ Unimicro runs several environments. Each is a **matched set** — portal, login 
 and mixing them across sets is the single easiest way to lose an hour, because everything
 looks fine until sign-in fails with an error that never mentions environments.
 
-| | Portal (register here) | Login | API |
+| `UNIMICRO_ENV` | Portal (register here) | Login | API |
 |---|---|---|---|
-| **dev** ← this template's default | `dev-developer.unimicro.no` | `dev-login.unimicro.no` | `dev.unimicro.no` |
-| **test** | `developer.unimicro.no` | `test-login.unimicro.no` | `test.unimicro.no` |
+| `dev` *(default)* | `dev-developer.unimicro.no` | `dev-login.unimicro.no` | `dev.unimicro.no` |
+| `test` | `developer.unimicro.no` | `test-login.unimicro.no` | `test.unimicro.no` |
 
-Both portals render the same page title and both hostnames answer normally, so a wrong
-one gives you no signal at all. **Register in the portal on the same row as the login
-host you are pointing at.** This template defaults to dev; to use test instead, set
-`UNIMICRO_ISSUER` and `UNIMICRO_API_BASE_URL` together.
+Switching is one line in `.env`:
+
+```bash
+UNIMICRO_ENV=test
+```
+
+That moves the login host and the API together, so they cannot drift apart. **Register in
+the portal on the same row** — credentials are per-environment, both portals render the
+same page title, and every hostname answers normally, so a mismatch gives you no signal
+until sign-in fails with an error that never mentions environments.
+
+The startup banner prints which environment it resolved. If you override `UNIMICRO_ISSUER`
+or `UNIMICRO_API_BASE_URL` individually and end up with a mixed pair, it says `custom`.
 
 Production hostnames differ again. Don't point a fork there without reading
 [docs/AUTH.md](docs/AUTH.md).
@@ -188,7 +197,7 @@ follows, and how a write tool asks the user before it acts.
 ## Testing
 
 ```bash
-npm test          # 42 tests
+npm test          # 46 tests
 npm run token     # a bearer token, for curl and scripts
 npm run typecheck
 npm run build
@@ -210,7 +219,7 @@ This is the only troubleshooting table in the repo; the other docs link here.
 | Sign-in ends on a Unimicro error page | The client's callback URL must be **exactly** `<PUBLIC_URL>/oauth/callback`. |
 | `invalid_scope` during sign-in | `UNIMICRO_SCOPES` asks for something your client doesn't have. Match it to the client's scope list in the portal. |
 | Sign-in works, tools fail | The client is missing the `AppFramework` scope. Set the access level, then recreate the client — a client keeps the scopes it was born with. |
-| Sign-in fails and nothing above fits | Environment mismatch. Decode your token at [jwt.io](https://jwt.io) and read `aud` — it names the environment. Compare with the table at the top. |
+| Sign-in fails and nothing above fits | Environment mismatch: credentials from one environment, `UNIMICRO_ENV` pointing at another. Check the banner, and decode your token at [jwt.io](https://jwt.io) — `aud` names the environment it came from. |
 | Saving the application does nothing | **Category** is empty. It is required. |
 | Your client must sign in again every hour | Tokens last one hour and no refresh token is issued by default. See `UNIMICRO_SCOPES` in `.env.example`. |
 | `Unknown client_id` on `/oauth/authorize` | The MCP client registered before a restart. Registrations are in memory — reconnect it. |

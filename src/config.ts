@@ -1,6 +1,29 @@
 import { z } from 'zod';
 
 /**
+ * Unimicro's environments. Each is a matched set: register in the portal on the
+ * same row as the issuer you point at, or sign-in fails with an error that
+ * never mentions environments.
+ *
+ * Pick one with `UNIMICRO_ENV`; the individual URLs below override it when you
+ * need something these rows do not cover.
+ */
+export const ENVIRONMENTS = {
+    dev: {
+        issuer: 'https://dev-login.unimicro.no',
+        api: 'https://dev.unimicro.no',
+        portal: 'https://dev-developer.unimicro.no',
+    },
+    test: {
+        issuer: 'https://test-login.unimicro.no',
+        api: 'https://test.unimicro.no',
+        portal: 'https://developer.unimicro.no',
+    },
+} as const;
+
+export type EnvironmentName = keyof typeof ENVIRONMENTS;
+
+/**
  * Every knob this server has, read from the environment once at startup.
  *
  * There is nothing to rename when you fork this repo — copy `.env.example`
@@ -22,20 +45,26 @@ const schema = z.object({
     PUBLIC_URL: z.url().optional(),
 
     /**
-     * Unimicro's identity provider. Paired with the API URL below and with the
-     * portal you registered in — see the environment table in the README.
+     * Which Unimicro environment to talk to. This is the one switch: it sets the
+     * identity provider and the API together, so they cannot drift apart.
      */
-    UNIMICRO_ISSUER: z.url().default('https://dev-login.unimicro.no'),
+    UNIMICRO_ENV: z.enum(['dev', 'test']).default('dev'),
 
-    /** The API base URL that serves `/api/...`, paired with the issuer above. */
-    UNIMICRO_API_BASE_URL: z.url().default('https://dev.unimicro.no'),
+    /** Overrides `UNIMICRO_ENV`'s identity provider. Rarely needed. */
+    UNIMICRO_ISSUER: z.url().optional(),
+
+    /** Overrides `UNIMICRO_ENV`'s API base URL. Rarely needed. */
+    UNIMICRO_API_BASE_URL: z.url().optional(),
 
     /**
      * The client on the application you registered in the developer portal.
      * Unimicro offers no dynamic registration, so this id is fixed at
      * registration time.
+     *
+     * Checked after parsing rather than here, so the error can name the portal
+     * for the environment actually selected.
      */
-    UNIMICRO_CLIENT_ID: z.string().min(1, 'UNIMICRO_CLIENT_ID is required — see the README. The portal that matches the default issuer is https://dev-developer.unimicro.no'),
+    UNIMICRO_CLIENT_ID: z.string().optional(),
 
     /**
      * The secret for that app, when it has one.
@@ -64,6 +93,10 @@ export type Config = Readonly<{
     publicUrl: URL;
     /** Canonical RFC 8707 resource identifier for this MCP server. */
     resourceUrl: URL;
+    /** Which row of ENVIRONMENTS is in play, or 'custom' when the URLs match none. */
+    environment: EnvironmentName | 'custom';
+    /** Where to register an application for this environment, when it is a known one. */
+    portalUrl: URL | undefined;
     issuer: URL;
     apiBaseUrl: URL;
     clientId: string;
@@ -92,12 +125,31 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
         throw new Error(`PUBLIC_URL must use https outside localhost (got ${publicUrl.origin}). OAuth issuers are HTTPS-only.`);
     }
 
+    const preset = ENVIRONMENTS[e.UNIMICRO_ENV];
+    const issuer = new URL(e.UNIMICRO_ISSUER ?? preset.issuer);
+    const apiBaseUrl = new URL(e.UNIMICRO_API_BASE_URL ?? preset.api);
+
+    // Report the row the URLs actually landed on, not the one that was asked
+    // for: overriding one of the pair is how a mixed set happens, and naming it
+    // 'custom' in the startup banner is what makes that visible.
+    const matched = (Object.keys(ENVIRONMENTS) as EnvironmentName[])
+        .find(name => ENVIRONMENTS[name].issuer === issuer.origin && ENVIRONMENTS[name].api === apiBaseUrl.origin);
+
+    if (!e.UNIMICRO_CLIENT_ID) {
+        const where = matched
+            ? `Register an application at ${ENVIRONMENTS[matched].portal} — the portal for the ${matched} environment.`
+            : `The issuer and API do not match a known environment, so register wherever ${issuer.origin} is administered.`;
+        throw new Error(`Invalid configuration:\n  UNIMICRO_CLIENT_ID: required\n\n${where}\nSee the README.`);
+    }
+
     return Object.freeze({
         port: e.PORT,
         publicUrl,
         resourceUrl: new URL('/mcp', publicUrl),
-        issuer: new URL(e.UNIMICRO_ISSUER),
-        apiBaseUrl: new URL(e.UNIMICRO_API_BASE_URL),
+        environment: matched ?? 'custom',
+        portalUrl: matched ? new URL(ENVIRONMENTS[matched].portal) : undefined,
+        issuer,
+        apiBaseUrl,
         clientId: e.UNIMICRO_CLIENT_ID,
         clientSecret: e.UNIMICRO_CLIENT_SECRET || undefined,
         scopes: e.UNIMICRO_SCOPES.split(/\s+/).filter(Boolean),

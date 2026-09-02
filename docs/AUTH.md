@@ -150,5 +150,6 @@ valid credential for your server.
 | `PUBLIC_URL` | This server's public origin. It is the OAuth issuer identifier and the base of every advertised URL, so it must match what clients dial, port included. HTTPS required off localhost. |
 | `UNIMICRO_CLIENT_ID` | The client on your application in the developer portal. |
 | `UNIMICRO_CLIENT_SECRET` | Only for a confidential client. Upstream-only; it never leaves the server. |
-| `UNIMICRO_ISSUER` | The identity provider. |
+| `UNIMICRO_ENV` | `dev` or `test`. Selects the identity provider and API as a pair, and the portal your credentials must come from. |
+| `UNIMICRO_ISSUER` | Overrides the environment's identity provider. Overriding one of the pair alone makes the setup `custom` — the banner says so. |
 | `UNIMICRO_SCOPES` | What to request upstream. Must be a subset of your client's scopes. |
